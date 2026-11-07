@@ -47,5 +47,5 @@ public class Docs {
    Bitmap bm=Bitmap.createBitmap(1400,Math.max(1,(int)(1400f*page.getHeight()/page.getWidth())),Bitmap.Config.ARGB_8888);bm.eraseColor(Color.WHITE);page.render(bm,null,null,PdfRenderer.Page.RENDER_MODE_FOR_PRINT);
    PdfDocument doc=new PdfDocument();try{PdfDocument.Page output=doc.startPage(new PdfDocument.PageInfo.Builder(595,842,1).create());output.getCanvas().drawBitmap(bm,null,new RectF(0,0,595,842),new Paint(3));doc.finishPage(output);try(OutputStream os=new FileOutputStream(newPdf(c,base(input)+"_page_"+(i+1)))){doc.writeTo(os);}}finally{doc.close();bm.recycle();}
   }}
- }}}
+ }}
 }
