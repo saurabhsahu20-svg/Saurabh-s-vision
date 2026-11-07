@@ -29,12 +29,34 @@ jobs:
           gradle-version: '8.11.1'
       - name: Compile debug APK
         run: gradle --no-daemon :app:assembleDebug
-      - name: Check APK exists
-        run: test -s app/build/outputs/apk/debug/app-debug.apk
+      - name: Verify APK signing, archive and package before publishing
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          unzip -tq "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs --min-sdk-version 24 "$APK" | tee apk-signature-verification.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee apk-package-info.txt
+          grep -q "name='com.musicvibe.app'" apk-package-info.txt
+          grep -q "versionCode='4'" apk-package-info.txt
+          grep -q "versionName='1.0.3'" apk-package-info.txt
+          grep -q "sdkVersion:'24'" apk-package-info.txt
+          grep -q "application-label:'Saune Vibe'" apk-package-info.txt
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$APK"
+          sha256sum "$APK" | tee apk-sha256.txt
+      - name: Upload APK verification reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAUNE_VIBE_v1.0.3_VERIFICATION
+          path: |
+            apk-signature-verification.txt
+            apk-package-info.txt
+            apk-sha256.txt
+          if-no-files-found: error
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: SAUNE_VIBE_v1.0.2_APK
+          name: SAUNE_VIBE_v1.0.3_APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publish direct APK download in GitHub Releases
@@ -42,13 +64,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk Saune_Vibe_v1.0.2.apk
-          test -s Saune_Vibe_v1.0.2.apk
-          if gh release view v1.0.2 > /dev/null 2>&1; then
-            gh release upload v1.0.2 Saune_Vibe_v1.0.2.apk --clobber
+          cp app/build/outputs/apk/debug/app-debug.apk Saune_Vibe_v1.0.3.apk
+          test -s Saune_Vibe_v1.0.3.apk
+          if gh release view v1.0.3 > /dev/null 2>&1; then
+            gh release upload v1.0.3 Saune_Vibe_v1.0.3.apk --clobber
           else
-            gh release create v1.0.2 Saune_Vibe_v1.0.2.apk \
-              --title "Saune Vibe 1.0.2 - Android APK" \
+            gh release create v1.0.3 Saune_Vibe_v1.0.3.apk \
+              --title "Saune Vibe 1.0.3 - Android APK" \
               --notes "Download the debug-signed Android APK below (Android 7.0+). Includes 20 curated official YouTube video links to browse without an API key, plus YouTube link import and optional live API search. Search requires your YouTube Data API key in Settings. This is a test build, not a Play Store release." \
               --target "$GITHUB_SHA"
           fi

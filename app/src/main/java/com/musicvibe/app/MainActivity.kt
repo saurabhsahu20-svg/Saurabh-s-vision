@@ -384,7 +384,7 @@ fun MusicVibe(activity:Activity){
      }}
      item{Button(onClick={showAdmin=true},modifier=Modifier.fillMaxWidth()){Icon(Icons.Rounded.Settings,contentDescription=null);Text(" Local admin dashboard")}}
      item{Text("Music via official YouTube playback. No MP3 downloads or background-only streams.",style=MaterialTheme.typography.bodySmall)}
-     item{Text("SAUNE VIBE • v1.0.2 • Android 7+",style=MaterialTheme.typography.bodySmall)}
+     item{Text("SAUNE VIBE • v1.0.3 • Android 7+",style=MaterialTheme.typography.bodySmall)}
     }
    }
   }
