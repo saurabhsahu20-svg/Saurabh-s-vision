@@ -5,7 +5,7 @@ plugins {
 }
 android {
   namespace = "com.musicvibe.app"
-  compileSdk = 35
+  compileSdk = 36
   defaultConfig {
     applicationId = "com.musicvibe.app"
     minSdk = 24
