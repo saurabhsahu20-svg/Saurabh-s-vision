@@ -185,7 +185,7 @@ fun MusicVibe(activity:Activity){
      Text("NOW PLAYING • YouTube",fontWeight=FontWeight.Bold)
     }
     Spacer(Modifier.height(14.dp))
-    key(v.id){
+    androidx.compose.runtime.key(v.id){
      val html="<html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head>"+
       "<body style='margin:0;background:black'><iframe width='100%' height='100%' src='https://www.youtube.com/embed/${v.id}?playsinline=1'"+
       " frameborder='0' allow='encrypted-media;picture-in-picture' allowfullscreen></iframe></body></html>"
