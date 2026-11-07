@@ -71,7 +71,16 @@ fun LiveMusicScreen(activity:Activity){
           .setTitle(track.title).setArtist(track.artist)
           .apply{if(track.image.startsWith("https://"))setArtworkUri(Uri.parse(track.image))}
           .build()).build()
-      media.setMediaItem(item)
+      val queue=tracks.map { song ->
+        MediaItem.Builder().setMediaId(song.key).setUri(song.stream)
+          .setMediaMetadata(MediaMetadata.Builder()
+            .setTitle(song.title).setArtist(song.artist)
+            .apply{if(song.image.startsWith("https://"))setArtworkUri(Uri.parse(song.image))}
+            .build()).build()
+      }
+      val idx=tracks.indexOfFirst{it.key==track.key}
+      if(queue.isNotEmpty() && idx>=0)media.setMediaItems(queue,idx,0L)
+      else media.setMediaItem(item)
       media.prepare()
       media.play()
       nowPlaying=track.title
