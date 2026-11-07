@@ -14,3 +14,7 @@ Features: trending, latest music videos, song/artist search, Hindi/English/Punja
 This repository is public. Never commit API secrets or passwords here. API keys stored within phone preferences are not a production-secret management system. Before Play Store release, implement a backend for YouTube API requests, secure authentication, privacy notice and release signing.
 
 **Status:** GitHub Actions build status determines if this source has compiled successfully. Don't treat source code as an APK until that workflow succeeds.
+
+## Direct APK download from GitHub
+
+After a successful CI build, the workflow publishes the latest debug APK at GitHub Releases tagged **v1.0.1**. Open the Releases page and select **Saune_Vibe_v1.0.1.apk**. If a release isn't yet available, use the successful Actions run artifact.
