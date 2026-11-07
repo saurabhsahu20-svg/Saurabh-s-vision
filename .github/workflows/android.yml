@@ -34,7 +34,7 @@ jobs:
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: SAUNE_VIBE_v1.0.1_APK
+          name: SAUNE_VIBE_v1.0.2_APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publish direct APK download in GitHub Releases
@@ -42,13 +42,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk Saune_Vibe_v1.0.1.apk
-          test -s Saune_Vibe_v1.0.1.apk
-          if gh release view v1.0.1 > /dev/null 2>&1; then
-            gh release upload v1.0.1 Saune_Vibe_v1.0.1.apk --clobber
+          cp app/build/outputs/apk/debug/app-debug.apk Saune_Vibe_v1.0.2.apk
+          test -s Saune_Vibe_v1.0.2.apk
+          if gh release view v1.0.2 > /dev/null 2>&1; then
+            gh release upload v1.0.2 Saune_Vibe_v1.0.2.apk --clobber
           else
-            gh release create v1.0.1 Saune_Vibe_v1.0.1.apk \
-              --title "Saune Vibe 1.0.1 - Android APK" \
-              --notes "Download the debug-signed Android APK below (Android 7.0+). The Saune Vibe branding includes the supplied neon headphone logo. Search requires your YouTube Data API key in Settings. This is a test build, not a Play Store release." \
+            gh release create v1.0.2 Saune_Vibe_v1.0.2.apk \
+              --title "Saune Vibe 1.0.2 - Android APK" \
+              --notes "Download the debug-signed Android APK below (Android 7.0+). Includes 20 curated official YouTube video links to browse without an API key, plus YouTube link import and optional live API search. Search requires your YouTube Data API key in Settings. This is a test build, not a Play Store release." \
               --target "$GITHUB_SHA"
           fi

@@ -18,3 +18,8 @@ This repository is public. Never commit API secrets or passwords here. API keys 
 ## Direct APK download from GitHub
 
 After a successful CI build, the workflow publishes the latest debug APK at GitHub Releases tagged **v1.0.1**. Open the Releases page and select **Saune_Vibe_v1.0.1.apk**. If a release isn't yet available, use the successful Actions run artifact.
+
+
+## Version 1.0.2: Included YouTube songs
+
+The Home and Discover tabs now have 20 curated, verified official YouTube video links across Hindi, English, Punjabi, Bhojpuri, moods and devotional. These are video links and metadata, NOT MP3/music file imports. No API key is necessary to browse these links. Use a YouTube video URL in Discover to open that song. An optional user-supplied YouTube Data API key enables broad live search. Playback may be blocked by rights owners or unavailable in some regions; use the Play in YouTube button in the song screen. Internet is required to play songs.

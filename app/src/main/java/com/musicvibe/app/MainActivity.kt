@@ -1,6 +1,8 @@
 package com.musicvibe.app
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -54,6 +56,55 @@ private fun queryFor(g:String)=when(g) {
   "Devotional"->"bhakti devotional songs official music video"
   else->"$g official music video"
 }
+
+/* Official public YouTube video IDs: only metadata is bundled, never copied audio/video. */
+private data class CatalogTrack(val id:String,val title:String,val artist:String,val tags:Set<String>){
+ fun asVideo()=Video(id,title,artist,"https://i.ytimg.com/vi/$id/hqdefault.jpg")
+}
+private val starterCatalog=listOf(
+ CatalogTrack("BddP6PYo2gs","Kesariya","Arijit Singh · Sony Music India",setOf("Hindi","Romantic")),
+ CatalogTrack("ElZfdU54Cp8","Apna Bana Le","Arijit Singh · Zee Music Company",setOf("Hindi","Romantic")),
+ CatalogTrack("AFTIVN8rRbI","Sajni","Arijit Singh · T-Series",setOf("Hindi","Sad","Romantic")),
+ CatalogTrack("wr9M-CoxP7A","Chaleya","Arijit Singh & Shilpa Rao · T-Series",setOf("Hindi","Romantic")),
+ CatalogTrack("6SGRn9OHtFY","Agar Tum Saath Ho","Alka Yagnik & Arijit Singh · T-Series",setOf("Hindi","Sad","Romantic")),
+ CatalogTrack("LK7-_dgAVQE","Tauba Tauba","Karan Aujla · Saregama Music",setOf("Hindi","Punjabi","Party")),
+ CatalogTrack("JGwWNGJdvx8","Shape of You","Ed Sheeran",setOf("English","Party")),
+ CatalogTrack("2Vv-BfVoq4g","Perfect","Ed Sheeran",setOf("English","Romantic")),
+ CatalogTrack("4NRXx6U8ABQ","Blinding Lights","The Weeknd",setOf("English","Party")),
+ CatalogTrack("N000qglmmY0","Levitating (Animated)","Dua Lipa",setOf("English","Party")),
+ CatalogTrack("gdZLi9oWNZg","Dynamite","BTS · HYBE LABELS",setOf("English","Party")),
+ CatalogTrack("dCmp56tSSmA","Born to Shine","Diljit Dosanjh",setOf("Punjabi","Party")),
+ CatalogTrack("4tywp83zkmk","Cheques","Shubh",setOf("Punjabi","Party")),
+ CatalogTrack("0hGGaVCCqPk","Hello Kaun","Ritesh Pandey & Sneh Upadhya",setOf("Bhojpuri","Party")),
+ CatalogTrack("o1mM3qsYO14","Bhojpuri Dance Hits (Jukebox)","Khesari Lal Yadav · Saregama Hum Bhojpuri",setOf("Bhojpuri","Party")),
+ CatalogTrack("7KEF-Qpw7Ww","Chhath Puja Special Jukebox","Sharda Sinha & Anuradha Paudwal",setOf("Bhojpuri","Devotional")),
+ CatalogTrack("cC4ORxmpUDQ","Chhath Geet Collection","Sharda Sinha · Tips Bhojpuri",setOf("Bhojpuri","Devotional")),
+ CatalogTrack("HSmjdnH8gQs","Shree Hanuman Chalisa","Hariharan · T-Series Bhakti Sagar",setOf("Devotional")),
+ CatalogTrack("txXXRMfp12w","Ram Siya Ram","Sachet Tandon · T-Series",setOf("Devotional")),
+ CatalogTrack("ZIKzQJYKJV0","Shiv Tandav Stotram","Shankar Mahadevan · Times Music Spiritual",setOf("Devotional"))
+)
+private fun includedVideos(search:String):List<Video>{
+ val raw=search.trim()
+ if(Regex("^[A-Za-z0-9_-]{11}$").matches(raw)){
+  val known=starterCatalog.firstOrNull{it.id==raw}
+  return listOf(known?.asVideo() ?: Video(raw,"Featured YouTube video","YouTube","https://i.ytimg.com/vi/$raw/hqdefault.jpg"))
+ }
+ val q=raw.lowercase()
+ val category=listOf("hindi","english","punjabi","bhojpuri","romantic","sad","party","devotional")
+  .firstOrNull{q.contains(it)}
+ val tracks=when{
+  q in listOf("trending","latest","featured","") -> starterCatalog
+  category!=null -> starterCatalog.filter{entry->entry.tags.any{it.equals(category,true)}}
+  else -> starterCatalog.filter{entry->
+   entry.title.lowercase().contains(q)||entry.artist.lowercase().contains(q)||
+    entry.tags.any{it.lowercase().contains(q)}
+  }
+ }
+ return tracks.map{it.asVideo()}
+}
+private fun youtubeIdFromLink(s:String):String? =
+ Regex("(?:[?&]v=|youtu\\.be/|/shorts/|/embed/)([A-Za-z0-9_-]{11})").find(s)?.groupValues?.getOrNull(1)
+
 class MainActivity:ComponentActivity(){
  override fun onCreate(savedInstanceState:Bundle?){
   super.onCreate(savedInstanceState)
@@ -102,14 +153,14 @@ fun MusicVibe(activity:Activity){
  var tab by remember{mutableStateOf(0)}
  var query by remember{mutableStateOf("")}
  var request by remember{mutableStateOf("trending")}
- var section by remember{mutableStateOf("Trending music")}
+ var section by remember{mutableStateOf("Included YouTube songs")}
  var current by remember{mutableStateOf<Video?>(null)}
  var loading by remember{mutableStateOf(false)}
  var error by remember{mutableStateOf("")}
- var videos by remember{mutableStateOf<List<Video>>(emptyList())}
+ var videos by remember{mutableStateOf(starterCatalog.map{it.asVideo()})}
  var recent by remember{mutableStateOf(pref.getString("recent","")!!.split("|").filter{it.isNotBlank()})}
  var favorite by remember{mutableStateOf(pref.getString("favourites","")!!.split("|").filter{it.isNotBlank()})}
- var cached by remember{mutableStateOf<Map<String,Video>>(emptyMap())}
+ var cached by remember{mutableStateOf(starterCatalog.associate{it.id to it.asVideo()})}
  var playlists by remember{
   mutableStateOf(runCatching{
    val a=JSONArray(pref.getString("playlists","[]"))
@@ -155,13 +206,19 @@ fun MusicVibe(activity:Activity){
  }
  BackHandler(enabled=current!=null||showAdmin){if(current!=null)current=null else showAdmin=false}
  LaunchedEffect(request,key){
-  if(key.isBlank()) {error="Add your YouTube Data API v3 key in Settings.";videos=emptyList();return@LaunchedEffect}
-  loading=true;error=""
+  val builtIn=includedVideos(request)
+  videos=builtIn
+  cached=cached+builtIn.associateBy{it.id}
+  error=""
+  if(key.isBlank())return@LaunchedEffect
+  loading=true
   val trend=request=="trending"
   val latest=request=="latest"
   val result=youtube(key,if(latest)"new official music video" else request,trend,latest)
-  result.onSuccess{videos=it;cached=cached+it.associateBy{v->v.id}}
-   .onFailure{error=it.message?:"Unable to load music";videos=emptyList()}
+  result.onSuccess{online->
+   videos=if(online.isNotEmpty())online else builtIn
+   cached=cached+videos.associateBy{it.id}
+  }.onFailure{error="Live YouTube search unavailable; showing included music.";videos=builtIn}
   loading=false
  }
  MaterialTheme(colorScheme=colors) {
@@ -203,7 +260,10 @@ fun MusicVibe(activity:Activity){
      TextButton(onClick={saveFavorite(v)}){Icon(if(v.id in favorite)Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,contentDescription=null);Text(" Favourite")}
      TextButton(onClick={showPlaylistDialog=v}){Icon(Icons.Rounded.PlaylistAdd,contentDescription=null);Text(" Playlist")}
     }
-    Text("Official embedded YouTube playback. Videos that disallow embedding can be viewed in YouTube.",style=MaterialTheme.typography.bodySmall)
+    TextButton(onClick={
+     activity.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://www.youtube.com/watch?v=${v.id}")))
+    }){Icon(Icons.Rounded.OpenInNew,contentDescription=null);Text(" Play in YouTube")}
+    Text("Music streams from YouTube using its official player. Playback availability depends on YouTube.",style=MaterialTheme.typography.bodySmall)
    }else if(showAdmin){
     LazyColumn(verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(vertical=15.dp)){
      item{Row(verticalAlignment=Alignment.CenterVertically){
@@ -240,6 +300,7 @@ fun MusicVibe(activity:Activity){
      item{Box(Modifier.fillMaxWidth().height(148.dp).background(Brush.horizontalGradient(backgrounds),RoundedCornerShape(20.dp)).padding(20.dp),contentAlignment=Alignment.CenterStart){
       Column{Text("SAUNE VIBE",color=Color.White,fontWeight=FontWeight.Black,fontSize=25.sp);Text(banner,color=Color.White,fontSize=17.sp)}
      }}
+     item{Text("20 songs ready to explore • no API key required",style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.primary)}
      item{Text("Find your vibe",fontWeight=FontWeight.Bold,fontSize=19.sp)}
      items((genres+customGenres).chunked(2)){row->
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
@@ -250,10 +311,10 @@ fun MusicVibe(activity:Activity){
       }
      }
      item{Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
-      Button(onClick={go("trending","Daily trending")}){Text("Trending")}
-      OutlinedButton(onClick={go("latest","Latest releases")}){Text("New releases")}
+      Button(onClick={go("trending",if(key.isBlank())"All songs" else "Daily trending")}){Text(if(key.isBlank())"All songs" else "Trending")}
+      OutlinedButton(onClick={go("latest",if(key.isBlank())"Music picks" else "Latest releases")}){Text(if(key.isBlank())"Music picks" else "New releases")}
      }}
-     item{Text("Daily trending • $section",fontWeight=FontWeight.Bold,fontSize=19.sp)}
+     item{Text("Music for you • $section",fontWeight=FontWeight.Bold,fontSize=19.sp)}
      if(loading)item{CircularProgressIndicator()}
      if(error.isNotBlank())item{Text(error,color=MaterialTheme.colorScheme.error)}
      items(videos.take(12),key={it.id}){v->SongCard(v,v.id in favorite,{open(v)},{saveFavorite(v)},{showPlaylistDialog=v})}
@@ -264,14 +325,28 @@ fun MusicVibe(activity:Activity){
      Spacer(Modifier.height(15.dp))
      Brand("Search the music you love")
      Spacer(Modifier.height(12.dp))
-     OutlinedTextField(query,{query=it},modifier=Modifier.fillMaxWidth(),label={Text("Search songs, artists, albums")},singleLine=true,
-      trailingIcon={IconButton(onClick={if(query.isNotBlank()){searches++;pref.edit().putInt("searches",searches).apply();go(query,"Search results")}}){
+     OutlinedTextField(query,{query=it},modifier=Modifier.fillMaxWidth(),label={Text("Search artist/song or paste a YouTube link")},singleLine=true,
+      trailingIcon={IconButton(onClick={
+       if(query.isNotBlank()){
+        val id=youtubeIdFromLink(query)
+        searches++;pref.edit().putInt("searches",searches).apply()
+        if(id!=null)open(Video(id,"YouTube song","Added from YouTube link","https://i.ytimg.com/vi/$id/hqdefault.jpg"))
+        else go(query,"Search results")
+       }
+      }){
        Icon(Icons.Rounded.Search,contentDescription="Search")
       }})
      Spacer(Modifier.height(11.dp))
      Text(section,fontWeight=FontWeight.Bold,fontSize=18.sp)
      if(loading) CircularProgressIndicator()
      if(error.isNotBlank())Text(error,color=MaterialTheme.colorScheme.error)
+     if(key.isBlank()){
+      Text("Browse the included songs or paste any YouTube video link above. Add an optional API key under Settings for wider search.",style=MaterialTheme.typography.bodySmall)
+      TextButton(onClick={
+       activity.startActivity(Intent(Intent.ACTION_VIEW,
+        Uri.parse("https://www.youtube.com/results?search_query="+URLEncoder.encode(query.ifBlank{section},"UTF-8"))))
+      }){Text("Search all YouTube songs")}
+     }
      LazyColumn(verticalArrangement=Arrangement.spacedBy(9.dp)){
       items(videos,key={it.id}){v->SongCard(v,v.id in favorite,{open(v)},{saveFavorite(v)},{showPlaylistDialog=v})}
      }
@@ -300,16 +375,16 @@ fun MusicVibe(activity:Activity){
     }
     else->LazyColumn(verticalArrangement=Arrangement.spacedBy(16.dp),contentPadding=PaddingValues(vertical=16.dp)){
      item{Brand("Make SAUNE VIBE yours")}
-     item{Text("YouTube connection",fontWeight=FontWeight.Bold,fontSize=19.sp)}
+     item{Text("YouTube search (optional)",fontWeight=FontWeight.Bold,fontSize=19.sp)}
      item{OutlinedTextField(key,{key=it.trim();pref.edit().putString("key",key).apply()},modifier=Modifier.fillMaxWidth(),label={Text("YouTube Data API v3 key")},singleLine=true)}
-     item{Text("Enable the YouTube Data API v3 in Google Cloud. This key is stored locally on your device; use a backend for production.",style=MaterialTheme.typography.bodySmall)}
+     item{Text("20 included official YouTube links work without an API key. Add a YouTube Data API v3 key only for live search/trending. Key is stored on this device; a backend is needed for production.",style=MaterialTheme.typography.bodySmall)}
      item{Row(verticalAlignment=Alignment.CenterVertically){
       Text("Dark mode",modifier=Modifier.weight(1f))
       Switch(darkMode,{darkMode=it;pref.edit().putBoolean("dark",it).apply()})
      }}
      item{Button(onClick={showAdmin=true},modifier=Modifier.fillMaxWidth()){Icon(Icons.Rounded.Settings,contentDescription=null);Text(" Local admin dashboard")}}
      item{Text("Music via official YouTube playback. No MP3 downloads or background-only streams.",style=MaterialTheme.typography.bodySmall)}
-     item{Text("SAUNE VIBE • v1.0.1 • Android 7+",style=MaterialTheme.typography.bodySmall)}
+     item{Text("SAUNE VIBE • v1.0.2 • Android 7+",style=MaterialTheme.typography.bodySmall)}
     }
    }
   }
