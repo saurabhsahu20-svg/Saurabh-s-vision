@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -237,7 +238,7 @@ fun MusicVibe(activity:Activity){
     0->LazyColumn(verticalArrangement=Arrangement.spacedBy(17.dp),contentPadding=PaddingValues(vertical=15.dp)){
      item{Brand("Discover your next favourite track")}
      item{Box(Modifier.fillMaxWidth().height(148.dp).background(Brush.horizontalGradient(backgrounds),RoundedCornerShape(20.dp)).padding(20.dp),contentAlignment=Alignment.CenterStart){
-      Column{Text("MUSIC VIBE",color=Color.White,fontWeight=FontWeight.Black,fontSize=25.sp);Text(banner,color=Color.White,fontSize=17.sp)}
+      Column{Text("SAUNE VIBE",color=Color.White,fontWeight=FontWeight.Black,fontSize=25.sp);Text(banner,color=Color.White,fontSize=17.sp)}
      }}
      item{Text("Find your vibe",fontWeight=FontWeight.Bold,fontSize=19.sp)}
      items((genres+customGenres).chunked(2)){row->
@@ -298,7 +299,7 @@ fun MusicVibe(activity:Activity){
      item{Text("Videos from previous sessions may need YouTube search to reload their details.",style=MaterialTheme.typography.bodySmall)}
     }
     else->LazyColumn(verticalArrangement=Arrangement.spacedBy(16.dp),contentPadding=PaddingValues(vertical=16.dp)){
-     item{Brand("Make MUSIC VIBE yours")}
+     item{Brand("Make SAUNE VIBE yours")}
      item{Text("YouTube connection",fontWeight=FontWeight.Bold,fontSize=19.sp)}
      item{OutlinedTextField(key,{key=it.trim();pref.edit().putString("key",key).apply()},modifier=Modifier.fillMaxWidth(),label={Text("YouTube Data API v3 key")},singleLine=true)}
      item{Text("Enable the YouTube Data API v3 in Google Cloud. This key is stored locally on your device; use a backend for production.",style=MaterialTheme.typography.bodySmall)}
@@ -308,7 +309,7 @@ fun MusicVibe(activity:Activity){
      }}
      item{Button(onClick={showAdmin=true},modifier=Modifier.fillMaxWidth()){Icon(Icons.Rounded.Settings,contentDescription=null);Text(" Local admin dashboard")}}
      item{Text("Music via official YouTube playback. No MP3 downloads or background-only streams.",style=MaterialTheme.typography.bodySmall)}
-     item{Text("MUSIC VIBE • v1.0.0 • Android 7+",style=MaterialTheme.typography.bodySmall)}
+     item{Text("SAUNE VIBE • v1.0.1 • Android 7+",style=MaterialTheme.typography.bodySmall)}
     }
    }
   }
@@ -328,9 +329,13 @@ fun MusicVibe(activity:Activity){
  }
 }
 @Composable private fun Brand(subtitle:String){
- Column {
-  Text("MUSIC VIBE",fontWeight=FontWeight.Black,fontSize=28.sp,color=MaterialTheme.colorScheme.primary)
-  Text(subtitle,style=MaterialTheme.typography.bodyMedium)
+ Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
+  Image(painter=painterResource(id=R.drawable.saune_vibe_icon),contentDescription="Saune Vibe logo",modifier=Modifier.size(64.dp))
+  Spacer(Modifier.width(12.dp))
+  Column {
+   Text("SAUNE VIBE",fontWeight=FontWeight.Black,fontSize=25.sp,color=MaterialTheme.colorScheme.primary)
+   Text(subtitle,style=MaterialTheme.typography.bodyMedium)
+  }
  }
 }
 @Composable private fun SongCard(v:Video,isFav:Boolean,onPlay:()->Unit,onFav:()->Unit,onPlaylist:()->Unit){
