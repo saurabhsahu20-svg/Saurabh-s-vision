@@ -74,7 +74,7 @@ private fun parseVideos(body:String):List<Video>{
  }
  return result
 }
-private suspend fun youtube(apiKey:String,query:String,trending:Boolean=false,latest:Boolean=false):Result<List<Video>>=
+private suspend fun youtube(apiKey:String,query:String,trending:Boolean=false,latest:Boolean=false): Result<List<Video>> =
  withContext(Dispatchers.IO){
   runCatching{
    require(apiKey.isNotBlank()){"Enter a YouTube Data API v3 key under Settings."}
