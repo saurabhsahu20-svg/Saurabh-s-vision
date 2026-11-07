@@ -7,7 +7,7 @@ permissions:
   contents: write
 jobs:
   apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -37,17 +37,37 @@ jobs:
           unzip -tq "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs --min-sdk-version 24 "$APK" | tee apk-signature-verification.txt
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee apk-package-info.txt
-          grep -q "name='com.musicvibe.app'" apk-package-info.txt
-          grep -q "versionCode='6'" apk-package-info.txt
-          grep -q "versionName='1.1.0'" apk-package-info.txt
+          grep -q "name='com.saunevibe.fresh'" apk-package-info.txt
+          grep -q "versionCode='7'" apk-package-info.txt
+          grep -q "versionName='1.1.1'" apk-package-info.txt
           grep -q "sdkVersion:'24'" apk-package-info.txt
           grep -q "application-label:'Saune Vibe'" apk-package-info.txt
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$APK"
           sha256sum "$APK" | tee apk-sha256.txt
+      - name: Allow hardware acceleration for Android emulator
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; fi
+      - name: Test fresh APK installation and launch on Android 11 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 20
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_3a
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            set -e
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell pm path com.saunevibe.fresh | grep '^package:'
+            adb shell am start -W -n com.saunevibe.fresh/com.musicvibe.app.MainActivity | tee android-launch-test.txt
+            sleep 8
+            adb shell pidof com.saunevibe.fresh | grep -E '^[0-9]+'
+            echo "Android 11 fresh install and launch smoke test passed."
       - name: Upload APK verification reports
         uses: actions/upload-artifact@v4
         with:
-          name: SAUNE_VIBE_v1.1.0_VERIFICATION
+          name: SAUNE_VIBE_FRESH_v1.1.1_VERIFICATION
           path: |
             apk-signature-verification.txt
             apk-package-info.txt
@@ -56,7 +76,7 @@ jobs:
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: SAUNE_VIBE_v1.1.0_APK
+          name: SAUNE_VIBE_FRESH_v1.1.1_APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publish direct APK download in GitHub Releases
@@ -64,13 +84,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk Saune_Vibe_v1.1.0.apk
-          test -s Saune_Vibe_v1.1.0.apk
-          if gh release view v1.1.0 > /dev/null 2>&1; then
-            gh release upload v1.1.0 Saune_Vibe_v1.1.0.apk --clobber
+          cp app/build/outputs/apk/debug/app-debug.apk Saune_Vibe_Fresh_Install_v1.1.1.apk
+          test -s Saune_Vibe_Fresh_Install_v1.1.1.apk
+          if gh release view v1.1.1 > /dev/null 2>&1; then
+            gh release upload v1.1.1 Saune_Vibe_Fresh_Install_v1.1.1.apk --clobber
           else
-            gh release create v1.1.0 Saune_Vibe_v1.1.0.apk \
-              --title "Saune Vibe 1.0.4 - Android APK" \
-              --notes "Download the debug-signed Android APK below (Android 7.0+). Real provider search/streaming (Audius, Jamendo with own client ID, Wikimedia Commons) with Media3 playback; retains Offline MP3 and YouTube link features. No YouTube-to-MP3 extraction. Debug-signed test APK." \
+            gh release create v1.1.1 Saune_Vibe_Fresh_Install_v1.1.1.apk \
+              --title "Saune Vibe 1.1.1 - Fresh Install APK" \
+              --notes "Download the debug-signed Android APK below (Android 7.0+). Fresh-install compatibility edition. Separate application ID com.saunevibe.fresh avoids signature conflicts with previous debug APKs. Your old installation remains untouched; its private data is not copied. Includes Audius, optional Jamendo, Wikimedia Commons, offline MP3 and official YouTube embed. Test build; use a persistent signing key for future upgrades." \
               --target "$GITHUB_SHA"
           fi

@@ -40,3 +40,11 @@ The new **Live** tab is the default opening page. It queries actual songs from A
 **Not included yet:** rights-cleared commercial Hindi/Bollywood catalog; Musopen, Internet Archive adapter; comprehensive Room/Hilt/WorkManager data migration; in-app equalizer/sleep timer; fully verified device end-to-end testing. Those require additional implementation and/or rights permissions. Never extract MP3 from YouTube.
 
 Sources: https://docs.audius.co/api/ ; https://developer.jamendo.com/v3.0/tracks ; https://www.mediawiki.org/wiki/API:Search ; https://developer.android.com/media/media3/session/background-playback
+
+## Version 1.1.1: Fresh-install compatibility APK
+
+Previous debug APKs used different signing certificates in separate GitHub Actions builds. Android refuses an in-place upgrade when signatures differ. The new **Fresh Install** compatibility package uses a distinct Android application ID (`com.saunevibe.fresh`), while preserving the existing Kotlin namespace, logo, app label, and user-facing music features. It can coexist with the older `com.musicvibe.app` APK without an update-signature collision. **Old app favourites, playlists and offline MP3 files are not automatically migrated** and remain in the old app's storage until that app is uninstalled. Do not uninstall the old app until you are sure you no longer need its data.
+
+GitHub Actions validates the APK zip, v2 signing, package name, app label, SDK compatibility, zip alignment, and attempts an `adb install` + launcher smoke test on an Android 11 emulator before publishing. This verifies the package can be installed and started in one test environment, not compatibility with every phone. To enable safe future in-place upgrades, configure a private, consistent release-signing certificate using GitHub Actions secrets; do NOT commit signing keys to this public repository.
+
+**Install**: Download the `.apk` from GitHub Releases v1.1.1 using Chrome; verify that it is an APK rather than HTML or ZIP. Android 7.0+ required. If installation fails, share the precise error text, Android version, and whether the old app is installed.
