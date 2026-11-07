@@ -28,3 +28,7 @@ The Home and Discover tabs now have 20 curated, verified official YouTube video 
 ## 1.0.3 APK integrity build
 
 GitHub Actions checks APK structure, Android package identity and manifest minSdk, APK cryptographic signing (apksigner), alignment (zipalign), SHA256 and app label before publishing. Download the .apk from the GitHub v1.0.3 Release (not the raw GitHub HTML preview). If Android reports "Package appears invalid", delete the incomplete downloaded file and download again in Chrome; confirm the download is an actual .apk, not an HTML or ZIP. If a previous Saune Vibe install has a mismatched signing certificate, back up local favourites/playlists before uninstalling the old app, as uninstall clears local data. This is a debug-signed test build; Play Store requires a stable release key.
+
+## Version 1.0.4: Offline MP3 Music
+
+The **Offline** tab contains a real device-local MP3 player with play/pause, previous/next, seek and stop controls. Import existing MP3 files using the Android file picker, or paste a direct HTTPS link to an MP3 file you have the right to download. Imported and downloaded MP3 audio is saved in the app's private offline storage, playable without internet. Downloads are checked for an MP3 header and restricted to 150 MB. The app does **not** download or extract audio from YouTube, Instagram, or other video services. YouTube songs remain embedded and need an internet connection. Songs in private storage are removed if the app is uninstalled. Android's Storage Access Framework handles selection without storage permissions.
