@@ -38,8 +38,8 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs --min-sdk-version 24 "$APK" | tee apk-signature-verification.txt
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee apk-package-info.txt
           grep -q "name='com.musicvibe.app'" apk-package-info.txt
-          grep -q "versionCode='5'" apk-package-info.txt
-          grep -q "versionName='1.0.4'" apk-package-info.txt
+          grep -q "versionCode='6'" apk-package-info.txt
+          grep -q "versionName='1.1.0'" apk-package-info.txt
           grep -q "sdkVersion:'24'" apk-package-info.txt
           grep -q "application-label:'Saune Vibe'" apk-package-info.txt
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$APK"
@@ -47,7 +47,7 @@ jobs:
       - name: Upload APK verification reports
         uses: actions/upload-artifact@v4
         with:
-          name: SAUNE_VIBE_v1.0.4_VERIFICATION
+          name: SAUNE_VIBE_v1.1.0_VERIFICATION
           path: |
             apk-signature-verification.txt
             apk-package-info.txt
@@ -56,7 +56,7 @@ jobs:
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: SAUNE_VIBE_v1.0.4_APK
+          name: SAUNE_VIBE_v1.1.0_APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publish direct APK download in GitHub Releases
@@ -64,13 +64,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk Saune_Vibe_v1.0.4.apk
-          test -s Saune_Vibe_v1.0.4.apk
-          if gh release view v1.0.4 > /dev/null 2>&1; then
-            gh release upload v1.0.4 Saune_Vibe_v1.0.4.apk --clobber
+          cp app/build/outputs/apk/debug/app-debug.apk Saune_Vibe_v1.1.0.apk
+          test -s Saune_Vibe_v1.1.0.apk
+          if gh release view v1.1.0 > /dev/null 2>&1; then
+            gh release upload v1.1.0 Saune_Vibe_v1.1.0.apk --clobber
           else
-            gh release create v1.0.4 Saune_Vibe_v1.0.4.apk \
+            gh release create v1.1.0 Saune_Vibe_v1.1.0.apk \
               --title "Saune Vibe 1.0.4 - Android APK" \
-              --notes "Download the debug-signed Android APK below (Android 7.0+). Adds an offline MP3 player, import from phone, and download from direct authorized HTTPS MP3 links, plus 20 curated YouTube links. YouTube-to-MP3 conversion is not supported. This is a debug-signed test build." \
+              --notes "Download the debug-signed Android APK below (Android 7.0+). Real provider search/streaming (Audius, Jamendo with own client ID, Wikimedia Commons) with Media3 playback; retains Offline MP3 and YouTube link features. No YouTube-to-MP3 extraction. Debug-signed test APK." \
               --target "$GITHUB_SHA"
           fi

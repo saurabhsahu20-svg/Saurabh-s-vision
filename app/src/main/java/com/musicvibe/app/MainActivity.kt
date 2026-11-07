@@ -150,7 +150,7 @@ fun MusicVibe(activity:Activity){
  val pref=remember{activity.getSharedPreferences("musicvibe",0)}
  var key by remember{mutableStateOf(pref.getString("key","")?:"")}
  var darkMode by remember{mutableStateOf(pref.getBoolean("dark",true))}
- var tab by remember{mutableStateOf(0)}
+ var tab by remember{mutableStateOf(3)}
  var query by remember{mutableStateOf("")}
  var request by remember{mutableStateOf("trending")}
  var section by remember{mutableStateOf("Included YouTube songs")}
@@ -226,9 +226,9 @@ fun MusicVibe(activity:Activity){
    bottomBar={
     if(current==null&&!showAdmin){
      NavigationBar {
-      listOf("Home","Discover","Library","Offline","Settings").forEachIndexed{idx,t->
+      listOf("Home","Discover","Library","Live","Offline","Settings").forEachIndexed{idx,t->
        NavigationBarItem(tab==idx,{tab=idx},
-        icon={Icon(when(idx){0->Icons.Rounded.Home;1->Icons.Rounded.Search;2->Icons.Rounded.LibraryMusic;3->Icons.Rounded.Headphones;else->Icons.Rounded.Settings},contentDescription=t)},
+        icon={Icon(when(idx){0->Icons.Rounded.Home;1->Icons.Rounded.Search;2->Icons.Rounded.LibraryMusic;3->Icons.Rounded.Equalizer;4->Icons.Rounded.Headphones;else->Icons.Rounded.Settings},contentDescription=t)},
         label={Text(t)})
       }
      }
@@ -301,7 +301,10 @@ fun MusicVibe(activity:Activity){
       Column{Text("SAUNE VIBE",color=Color.White,fontWeight=FontWeight.Black,fontSize=25.sp);Text(banner,color=Color.White,fontSize=17.sp)}
      }}
      item{Text("20 songs ready to explore • no API key required",style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.primary)}
-     item{OutlinedButton(onClick={tab=3},modifier=Modifier.fillMaxWidth()){Icon(Icons.Rounded.Headphones,contentDescription=null);Text(" Offline MP3 Player & Downloads")}}
+     item{OutlinedButton(onClick={tab=4},modifier=Modifier.fillMaxWidth()){Icon(Icons.Rounded.Headphones,contentDescription=null);Text(" Offline MP3 Player & Downloads")}}
+     item{Button(onClick={tab=3},modifier=Modifier.fillMaxWidth()){
+       Icon(Icons.Rounded.MusicNote,contentDescription=null);Text(" Real Music Streaming")
+     }}
      item{Text("Find your vibe",fontWeight=FontWeight.Bold,fontSize=19.sp)}
      items((genres+customGenres).chunked(2)){row->
       Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
@@ -374,7 +377,8 @@ fun MusicVibe(activity:Activity){
      }
      item{Text("Videos from previous sessions may need YouTube search to reload their details.",style=MaterialTheme.typography.bodySmall)}
     }
-    3->OfflineMp3Screen(activity)
+    3->LiveMusicScreen(activity)
+    4->OfflineMp3Screen(activity)
     else->LazyColumn(verticalArrangement=Arrangement.spacedBy(16.dp),contentPadding=PaddingValues(vertical=16.dp)){
      item{Brand("Make SAUNE VIBE yours")}
      item{Text("YouTube search (optional)",fontWeight=FontWeight.Bold,fontSize=19.sp)}
@@ -386,7 +390,7 @@ fun MusicVibe(activity:Activity){
      }}
      item{Button(onClick={showAdmin=true},modifier=Modifier.fillMaxWidth()){Icon(Icons.Rounded.Settings,contentDescription=null);Text(" Local admin dashboard")}}
      item{Text("Music via official YouTube playback. No MP3 downloads or background-only streams.",style=MaterialTheme.typography.bodySmall)}
-     item{Text("SAUNE VIBE • v1.0.4 • Android 7+",style=MaterialTheme.typography.bodySmall)}
+     item{Text("SAUNE VIBE • v1.1.0 • Android 7+",style=MaterialTheme.typography.bodySmall)}
     }
    }
   }

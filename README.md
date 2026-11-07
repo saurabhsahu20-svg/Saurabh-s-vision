@@ -32,3 +32,11 @@ GitHub Actions checks APK structure, Android package identity and manifest minSd
 ## Version 1.0.4: Offline MP3 Music
 
 The **Offline** tab contains a real device-local MP3 player with play/pause, previous/next, seek and stop controls. Import existing MP3 files using the Android file picker, or paste a direct HTTPS link to an MP3 file you have the right to download. Imported and downloaded MP3 audio is saved in the app's private offline storage, playable without internet. Downloads are checked for an MP3 header and restricted to 150 MB. The app does **not** download or extract audio from YouTube, Instagram, or other video services. YouTube songs remain embedded and need an internet connection. Songs in private storage are removed if the app is uninstalled. Android's Storage Access Framework handles selection without storage permissions.
+
+## Saune Vibe v1.1.0: Real source APIs and Media3
+
+The new **Live** tab is the default opening page. It queries actual songs from Audius public read-only API without credentials, optionally Jamendo Music API using a developer client ID, and Wikimedia Commons API for explicitly free-licensed audio. Search shows results from live responses; empty or unavailable sources show a message instead of fake items. Music streams using AndroidX Media3 ExoPlayer, with a MediaSessionService supporting background playback, Bluetooth and system media controls. Track source and license links are exposed; the provider download button appears only when its metadata permits it. Old YouTube discovery, offline MP3 import/download, playlists, favourites, and user settings remain. Jamendo needs a legitimate account-specific client ID. Some tracks can be region restricted or incompatible; a successful APK build does not verify song playback on a phone.
+
+**Not included yet:** rights-cleared commercial Hindi/Bollywood catalog; Musopen, Internet Archive adapter; comprehensive Room/Hilt/WorkManager data migration; in-app equalizer/sleep timer; fully verified device end-to-end testing. Those require additional implementation and/or rights permissions. Never extract MP3 from YouTube.
+
+Sources: https://docs.audius.co/api/ ; https://developer.jamendo.com/v3.0/tracks ; https://www.mediawiki.org/wiki/API:Search ; https://developer.android.com/media/media3/session/background-playback

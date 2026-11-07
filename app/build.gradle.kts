@@ -10,8 +10,8 @@ android {
     applicationId = "com.musicvibe.app"
     minSdk = 24
     targetSdk = 35
-    versionCode = 5
-    versionName = "1.0.4"
+    versionCode = 6
+    versionName = "1.1.0"
   }
   buildFeatures { compose = true }
   compileOptions {
@@ -30,4 +30,6 @@ dependencies {
   implementation("androidx.compose.material3:material3")
   implementation("androidx.compose.material:material-icons-extended")
   implementation("io.coil-kt:coil-compose:2.7.0")
+  implementation("androidx.media3:media3-exoplayer:1.11.1")
+  implementation("androidx.media3:media3-session:1.11.1")
 }

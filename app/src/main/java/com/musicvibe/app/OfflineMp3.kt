@@ -104,7 +104,7 @@ private fun copyUriMp3(context: Context, uri: Uri): File {
     }
 }
 
-private fun downloadLicensedMp3(context: Context, link: String, chosenName: String): File {
+internal fun downloadLicensedMp3(context: Context, link: String, chosenName: String): File {
     val url = URL(link.trim())
     require(url.protocol.equals("https", true)) { "Use a direct HTTPS MP3 download link." }
     val host = url.host.lowercase()
