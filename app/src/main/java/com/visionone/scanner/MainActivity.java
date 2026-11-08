@@ -25,8 +25,8 @@ public class MainActivity extends ComponentActivity {
     LinearLayout root, body;
     TextView count;
     String mode="smart";
-    static final int IMPORT=30;
-    @Override public void onCreate(Bundle b){super.onCreate(b);loadSession();home();}
+    static final int IMPORT=30, CROP=31;
+    @Override public void onCreate(Bundle b){super.onCreate(b);loadSession();mode=getSharedPreferences("settings",MODE_PRIVATE).getString("mode","smart");if(getIntent().getBooleanExtra("showPages",false))editor();else home();}
     void loadSession(){PAGES.clear();File[] all=Docs.session(this).listFiles((f,n)->n.endsWith(".jpg"));if(all!=null){Arrays.sort(all,Comparator.comparing(File::getName));Collections.addAll(PAGES,all);}}
     static TextView txt(Context c,String s,int sz,int color){TextView t=new TextView(c);t.setText(s);t.setTextSize(sz);t.setTextColor(color);t.setPadding(8,12,8,12);return t;}
     TextView button(String text,Runnable fn){TextView t=txt(this,text,17,NAVY);t.setGravity(Gravity.CENTER);t.setBackground(round(0xffe6f3ff,18));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,5,0,5);body.addView(t,p);t.setOnClickListener(v->fn.run());return t;}
@@ -44,19 +44,21 @@ public class MainActivity extends ComponentActivity {
       button("✍   REVIEW SCANNED PAGES ("+PAGES.size()+")",this::editor);
       TextView info=txt(this,"Files stay on your phone. No login or cloud upload.",13,0xff66778f);body.addView(info);
     }
-    void start(String m,boolean fresh){mode=m;if(fresh)clearSession();Intent i=new Intent(this,CameraScreen.class);i.putExtra("mode",m);startActivity(i);}
-    void clearSession(){for(File f:PAGES)f.delete();PAGES.clear();}
+    void start(String m,boolean fresh){mode=m;getSharedPreferences("settings",MODE_PRIVATE).edit().putString("mode",m).apply();if(fresh)clearSession();Intent i=new Intent(this,CameraScreen.class);i.putExtra("mode",m);startActivity(i);}
+    void clearSession(){Docs.clearPages(this);PAGES.clear();}
     void importImages(boolean fresh){if(fresh)clearSession();Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("image/*");i.addCategory(Intent.CATEGORY_OPENABLE);i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);startActivityForResult(i,IMPORT);}
-    @Override protected void onActivityResult(int req,int result,Intent data){super.onActivityResult(req,result,data);if(req==IMPORT&&result==RESULT_OK&&data!=null){try{
+    @Override protected void onActivityResult(int req,int result,Intent data){super.onActivityResult(req,result,data);if(req==CROP){editor();return;}if(req==IMPORT&&result==RESULT_OK&&data!=null){try{
        if(data.getClipData()!=null){for(int j=0;j<data.getClipData().getItemCount();j++)saveImported(data.getClipData().getItemAt(j).getUri());}
        else if(data.getData()!=null)saveImported(data.getData());
        editor();
     }catch(Exception e){error(e);}}}
-    void saveImported(Uri uri)throws Exception {Bitmap bitmap=BitmapFactory.decodeStream(getContentResolver().openInputStream(uri));if(bitmap==null)throw new IOException("Image could not be decoded");File f=Docs.newPage(this);Docs.saveBitmap(bitmap,f,90);bitmap.recycle();PAGES.add(f);}
-    void editor(){loadSession();shell("Review pages");body.addView(txt(this,"Pages: "+PAGES.size()+"  •  A4 PDF",17,NAVY));button("＋ ADD MORE PAGES",()->{Intent i=new Intent(this,CameraScreen.class);i.putExtra("mode",mode);startActivity(i);});button("🖼 IMPORT MORE",()->importImages(false));if(PAGES.isEmpty()){button("GO HOME",this::home);return;}
+    void saveImported(Uri uri)throws Exception {File f=Docs.newPage(this);Docs.importImage(this,uri,f);PAGES.add(f);}
+    void editor(){loadSession();shell("Review & crop pages");body.addView(txt(this,"Pages: "+PAGES.size()+"  •  Tap CROP to adjust document boundaries",16,NAVY));button("＋ ADD MORE PAGES",()->{Intent i=new Intent(this,CameraScreen.class);i.putExtra("mode",mode);startActivity(i);});button("🖼 IMPORT MORE",()->importImages(false));if(PAGES.isEmpty()){button("GO HOME",this::home);return;}
       button("✓ SAVE AS PDF",this::saveDialog);
       for(int index=0;index<PAGES.size();index++){final int n=index;File f=PAGES.get(index);LinearLayout item=new LinearLayout(this);item.setOrientation(LinearLayout.VERTICAL);item.setPadding(12,12,12,12);LinearLayout.LayoutParams layout=new LinearLayout.LayoutParams(-1,-2);layout.setMargins(0,6,0,6);item.setBackground(round(-1,12));body.addView(item,layout);
-         item.addView(txt(this,"PAGE "+(index+1),15,NAVY));ImageView preview=new ImageView(this);preview.setAdjustViewBounds(true);preview.setImageBitmap(Docs.read(f,850));item.addView(preview,new LinearLayout.LayoutParams(-1,380));
+         item.addView(txt(this,"PAGE "+(index+1),15,NAVY));ImageView preview=new ImageView(this);preview.setAdjustViewBounds(true);preview.setImageBitmap(Docs.read(f,550));item.addView(preview,new LinearLayout.LayoutParams(-1,250));
+         TextView crop=txt(this,"✂  CROP & STRAIGHTEN — ADJUST 4 CORNERS",16,BLUE);crop.setGravity(Gravity.CENTER);crop.setBackground(round(0xffe6f3ff,12));item.addView(crop);crop.setOnClickListener(v->openCrop(f));
+         preview.setOnClickListener(v->openCrop(f));
          LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);item.addView(row);
          mini(row,"↑",()->{if(n>0){Collections.swap(PAGES,n,n-1);Docs.persistOrder(this,PAGES);editor();}});
          mini(row,"↓",()->{if(n<PAGES.size()-1){Collections.swap(PAGES,n,n+1);Docs.persistOrder(this,PAGES);editor();}});
@@ -64,12 +66,21 @@ public class MainActivity extends ComponentActivity {
          mini(row,"OCR",()->ocr(f));mini(row,"✕",()->{f.delete();PAGES.remove(n);Docs.persistOrder(this,PAGES);editor();});
       }button("SAVE PDF",this::saveDialog);button("HOME",this::home);
     }
+    void openCrop(File f){Intent intent=new Intent(this,CropActivity.class);intent.putExtra("page",f.getAbsolutePath());intent.putExtra("question","question".equals(mode));startActivityForResult(intent,CROP);}
     void mini(LinearLayout row,String caption,Runnable run){TextView b=txt(this,caption,14,BLUE);b.setGravity(Gravity.CENTER);row.addView(b,new LinearLayout.LayoutParams(0,54,1));b.setOnClickListener(v->run.run());}
     void change(int index,int action){File file=PAGES.get(index);new Thread(()->{try{Bitmap img=Docs.read(file,3000);if(img==null)throw new IOException("Invalid page");Bitmap output=action==1?Docs.rotate(img):action==2?Docs.bw(img):Docs.enhance(img);Docs.saveBitmap(output,file,92);if(output!=img)output.recycle();img.recycle();runOnUiThread(this::editor);}catch(Exception e){runOnUiThread(()->error(e));}}).start();}
-    void saveDialog(){EditText input=new EditText(this);input.setSingleLine();input.setText("Vision_Scan_"+System.currentTimeMillis());new AlertDialog.Builder(this).setTitle("Save A4 PDF").setView(input).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
-      String n=input.getText().toString().replaceAll("[^a-zA-Z0-9_ -]","_").trim();if(n.isEmpty())n="Document";final String name=n;
-      new Thread(()->{try{File file=Docs.newPdf(this,name);Docs.makePdf(this,new ArrayList<>(PAGES),file);runOnUiThread(()->new AlertDialog.Builder(this).setTitle("PDF saved").setMessage(file.getName()).setPositiveButton("Open",(a,b)->view(file)).setNeutralButton("Share",(a,b)->share(file)).setNegativeButton("My PDFs",(a,b)->library()).show());}catch(Exception e){runOnUiThread(()->error(e));}}).start();
-    }).show();}
+    void saveDialog(){if(PAGES.isEmpty()){error(new IOException("Scan a page first"));return;}
+      LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(25,10,25,0);
+      EditText input=new EditText(this);input.setSingleLine();input.setText("Vision_Scan_"+System.currentTimeMillis());input.setHint("PDF file name");box.addView(input);
+      box.addView(txt(this,"Select actual paper size for PDF",15,NAVY));
+      Spinner spinner=new Spinner(this);spinner.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,PaperEdges.SIZES));box.addView(spinner);
+      String old=getSharedPreferences("settings",MODE_PRIVATE).getString("paper","A4");for(int i=0;i<PaperEdges.SIZES.length;i++)if(PaperEdges.SIZES[i].equals(old))spinner.setSelection(i);
+      new AlertDialog.Builder(this).setTitle("Save PDF • Page size").setView(box).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
+        String n=input.getText().toString().replaceAll("[^a-zA-Z0-9_ -]","_").trim();if(n.isEmpty())n="Document";final String name=n,paper=(String)spinner.getSelectedItem();
+        getSharedPreferences("settings",MODE_PRIVATE).edit().putString("paper",paper).apply();
+        new Thread(()->{try{File file=Docs.newPdf(this,name);Docs.makePdf(this,new ArrayList<>(PAGES),file,paper);runOnUiThread(()->new AlertDialog.Builder(this).setTitle("PDF saved").setMessage(file.getName()+" • "+paper).setPositiveButton("Open",(a,b)->view(file)).setNeutralButton("Share",(a,b)->share(file)).setNegativeButton("My PDFs",(a,b)->library()).show());}catch(Exception e){runOnUiThread(()->error(e));}}).start();
+      }).show();
+    }
     void library(){shell("My PDFs");File[] pdfs=Docs.pdfDir(this).listFiles((f,n)->n.endsWith(".pdf"));if(pdfs==null||pdfs.length==0){body.addView(txt(this,"No PDFs saved yet",16,NAVY));}else{Arrays.sort(pdfs,(a,b)->Long.compare(b.lastModified(),a.lastModified()));for(File f:pdfs){button("📄 "+f.getName(),()->fileMenu(f));}}button("NEW SCAN",()->start("smart",true));button("HOME",this::home);}
     void fileMenu(File f){String[] actions={"Open","Share","Print","Rename","Delete","Split into pages","Compress PDF"};new AlertDialog.Builder(this).setTitle(f.getName()).setItems(actions,(d,i)->{switch(i){case 0:view(f);break;case 1:share(f);break;case 2:Docs.print(this,f);break;case 3:rename(f);break;case 4:new AlertDialog.Builder(this).setTitle("Delete PDF?").setPositiveButton("Delete",(di,wi)->{f.delete();library();}).setNegativeButton("Cancel",null).show();break;case 5:pdfOperation(f,false);break;case 6:pdfOperation(f,true);break;}}).show();}
     void rename(File f){EditText t=new EditText(this);t.setSingleLine();t.setText(Docs.base(f));new AlertDialog.Builder(this).setTitle("Rename PDF").setView(t).setNegativeButton("Cancel",null).setPositiveButton("Rename",(d,w)->{String name=t.getText().toString().replaceAll("[^a-zA-Z0-9_ -]","_");File target=new File(f.getParentFile(),name+".pdf");if(target.exists())new AlertDialog.Builder(this).setMessage("File already exists").setPositiveButton("OK",null).show();else {f.renameTo(target);library();}}).show();}
