@@ -1,20 +1,19 @@
-# VISION ONE PDF Scanner v1.1 Beta
+# VISION ONE 1.2 Beta — Actual Document Auto Edge Detection
 
-Scan Smart. Save Simple.
+*Scan Smart. Save Simple.*
 
-## New in v1.1
-- Document-boundary auto suggestions for bright paper against a darker surface (best effort, manual adjustment available).
-- Four draggable crop corners and perspective rectification.
-- Crop controls for A4, A5, Letter, Legal, ID card and original document proportions.
-- Paper-size selection during PDF export (no stretch, image fitted inside chosen page).
-- Original scans backed up while editing for non-destructive re-cropping.
-- EXIF image orientation correction for camera and imported photos.
-- Camera capture automatically attempts high-confidence crop; questionable cases preserve the full image.
-- Scan-to-review navigation fix; tap any page to crop.
+## Improved scanning
+- OpenCV contour detection using Canny edges and multiple threshold passes to identify the outer quadrilateral of a document regardless of its preset page size.
+- Perspective rectification with four-corner crop for notes, bills, ID cards, letters and examination papers.
+- Best-effort automatic crop after capturing; scans remain intact if no reliable page boundary is detected.
+- Manual adjustment with four draggable corners; retest with AUTO EDGES button on the crop screen.
+- **Original proportions** is the new default for PDF, allowing smaller receipts, books and certificates to keep their captured proportions; A4, A5, Legal, Letter and ID card remain selectable.
+- No uploads or login; document edge detection runs locally on-device.
+- Multi-page scanning, image import, PDF export, OCR and local PDF operations from earlier versions remain.
 
-## Build
-GitHub Actions > VISION ONE APK Build > choose run for v1.1 branch > Artifacts.
+## Beta limitations
+Detection can be less accurate on a document with a background of similar color, heavy shadows, folding, glare, or partially missing page edges. Review the crop preview before saving. **Original proportions** preserves shape, but photographs cannot tell the exact physical millimetre dimensions of a paper without a reference object or a known preset size.
+A successful GitHub compilation does not equal device-tested quality. Android phone scanning, crop accuracy and installation compatibility must be tested. Debug builds signed by a different key may require uninstalling the earlier beta after exporting any important PDFs.
 
-This is a **debug-signed beta APK**, and requires real-device scanning/print testing. Since CI uses a temporary debug signing key, earlier betas may have to be uninstalled first. Export personal PDFs before uninstall; uninstalling destroys private app storage.
-
-Automatic corner detection uses a heuristic and may not work with white backgrounds, glossy pages, busy desks or extreme lighting. Manual four-corner crop always remains available. Offline OCR models are included in the base app; ML Kit accuracy can vary.
+## APK
+In GitHub Actions select a successful run on branch `vision-one-scanner-v1-2-autoedge` and download the `VISION-ONE-v1.2-AutoEdge-APK` artifact.

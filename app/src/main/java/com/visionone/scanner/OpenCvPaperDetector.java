@@ -134,9 +134,9 @@ public final class OpenCvPaperDetector {
         float[] result=new float[8];
         for(int i=0;i<4;i++){Point q=p[(start+i)%4];result[2*i]=(float)(q.x/w);result[2*i+1]=(float)(q.y/h);}
         if(signedArea(result)<0) {
-            for(int j=0;j<2;j++){
-                float x=result[2+j],y=result[3+j];result[2+j]=result[6-j];result[3+j]=result[7-j];result[6-j]=x;result[7-j]=y;
-            }
+            float x=result[2],y=result[3];
+            result[2]=result[6];result[3]=result[7];
+            result[6]=x;result[7]=y;
         }
         return result;
     }

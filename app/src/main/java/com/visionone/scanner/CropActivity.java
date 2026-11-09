@@ -11,7 +11,8 @@ import java.io.*;
 
 public class CropActivity extends ComponentActivity {
  File page,source;Bitmap image;CornerView cropView;Spinner sizeSpinner,filterSpinner;
- int turns=0;boolean saving=false;
+ int turns=0;boolean saving=false;int detectionVersion=0;
+ TextView edgeStatus;
  String[] FILTERS={"Original","Enhanced Color","Grayscale","Black & White"};
  @Override public void onCreate(Bundle state){super.onCreate(state);String path=getIntent().getStringExtra("page");if(path==null){finish();return;}
   page=new File(path);if(!page.exists()){finish();return;}source=Docs.original(this,page);
@@ -24,20 +25,54 @@ public class CropActivity extends ComponentActivity {
  }
  void build(){LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(0xff07182e);
   root.addView(label("VISION ONE  •  ADJUST DOCUMENT CORNERS",19,Color.WHITE));
-  root.addView(label("Drag the 4 blue corner dots to match the paper edges",13,0xffc9e1ff));
+  edgeStatus=label("Detecting actual document outline…",13,0xffc9e1ff);root.addView(edgeStatus);
+  root.addView(label("Drag the blue dots if any boundary needs correction",12,0xffc9e1ff));
   cropView=new CornerView(this,image);root.addView(cropView,new LinearLayout.LayoutParams(-1,0,1));
   LinearLayout one=new LinearLayout(this);root.addView(one);
-  action(one,"AUTO EDGES",()->{float[] detected=PaperEdges.suggest(image);if(detected!=null){cropView.corners=detected;cropView.invalidate();}else Toast.makeText(this,"Auto edges not clear; drag corners manually",Toast.LENGTH_LONG).show();});
+  action(one,"AUTO EDGES",()->detectEdgesAsync());
   action(one,"FULL PHOTO",()->{cropView.corners=PaperEdges.FULL.clone();cropView.invalidate();});
-  action(one,"ROTATE ↻",()->{Bitmap next=Docs.rotate(image);image.recycle();image=next;turns=(turns+1)%4;cropView.bitmap=image;float[] guess=PaperEdges.suggest(image);cropView.corners=guess!=null?guess:defaultCorners();cropView.invalidate();});
+  action(one,"ROTATE ↻",()->{detectionVersion++;Bitmap next=Docs.rotate(image);image.recycle();image=next;turns=(turns+1)%4;cropView.bitmap=image;cropView.corners=defaultCorners();cropView.touched=false;cropView.invalidate();detectEdgesAsync();});
   LinearLayout two=new LinearLayout(this);two.setOrientation(LinearLayout.HORIZONTAL);root.addView(two);
   sizeSpinner=new Spinner(this);ArrayAdapter<String> sizes=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,PaperEdges.SIZES);sizeSpinner.setAdapter(sizes);two.addView(sizeSpinner,new LinearLayout.LayoutParams(0,54,1));
-  String old=getSharedPreferences("settings",MODE_PRIVATE).getString("paper","A4");for(int i=0;i<PaperEdges.SIZES.length;i++)if(PaperEdges.SIZES[i].equals(old))sizeSpinner.setSelection(i);
+  String old=getSharedPreferences("settings",MODE_PRIVATE).getString("paper","Original proportions");for(int i=0;i<PaperEdges.SIZES.length;i++)if(PaperEdges.SIZES[i].equals(old))sizeSpinner.setSelection(i);
   filterSpinner=new Spinner(this);filterSpinner.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,FILTERS));two.addView(filterSpinner,new LinearLayout.LayoutParams(0,54,1));
   if(getIntent().getBooleanExtra("question",false))filterSpinner.setSelection(3);
   LinearLayout bottom=new LinearLayout(this);root.addView(bottom);
   action(bottom,"CANCEL",this::finish);action(bottom,"✓ APPLY CROP",this::apply);setContentView(root);
-  float[] guess=PaperEdges.suggest(image);cropView.corners=guess!=null?guess:defaultCorners();cropView.invalidate();
+  cropView.corners=defaultCorners();cropView.invalidate();detectEdgesAsync();
+ }
+ void detectEdgesAsync(){
+  if(image==null||image.isRecycled())return;
+  final int id=++detectionVersion;
+  cropView.touched=false;
+  edgeStatus.setText("Detecting document edges…");
+  final Bitmap input;
+  try{
+    float scale=Math.min(1f,1150f/Math.max(image.getWidth(),image.getHeight()));
+    input=Bitmap.createScaledBitmap(image,Math.max(1,Math.round(image.getWidth()*scale)),Math.max(1,Math.round(image.getHeight()*scale)),true);
+    if(input==image){ // avoid accessing/recycling an image being rotated during detection
+       Bitmap safe=input.copy(Bitmap.Config.ARGB_8888,false);
+       if(safe==null)throw new OutOfMemoryError("Preview memory");
+       new Thread(()->finishDetect(id,safe)).start();return;
+    }
+  }catch(Throwable t){edgeStatus.setText("Manual crop available");return;}
+  new Thread(()->finishDetect(id,input)).start();
+ }
+ void finishDetect(int id,Bitmap input){
+  float[] corners=null;
+  try{corners=PaperEdges.suggest(input);}
+  catch(Throwable ignored){}
+  finally{input.recycle();}
+  final float[] found=corners;
+  runOnUiThread(()->{
+    if(isFinishing()||isDestroyed()||id!=detectionVersion)return;
+    if(found!=null&&!cropView.touched){
+      cropView.corners=found;cropView.invalidate();
+      edgeStatus.setText("Auto detected • drag corners to fine-tune actual paper size");
+    }else if(found==null){
+      edgeStatus.setText("No reliable edge found • drag 4 corners manually");
+    }else edgeStatus.setText("Manual corners kept");
+  });
  }
  static float[] defaultCorners(){return new float[]{.04f,.04f,.96f,.04f,.96f,.96f,.04f,.96f};}
  void apply(){
@@ -64,7 +99,7 @@ public class CropActivity extends ComponentActivity {
  }
  @Override protected void onDestroy(){super.onDestroy();if(image!=null&&!image.isRecycled())image.recycle();}
  static final class CornerView extends View {
-   Bitmap bitmap;float[] corners=defaultCorners();RectF picture=new RectF();Paint paint=new Paint(3);int selected=-1;
+   Bitmap bitmap;float[] corners=defaultCorners();RectF picture=new RectF();Paint paint=new Paint(3);int selected=-1;boolean touched=false;
    CornerView(Context c,Bitmap bmp){super(c);bitmap=bmp;setLayerType(View.LAYER_TYPE_SOFTWARE,null);}
    void frame(){float dw=getWidth(),dh=getHeight();float scale=Math.min((dw-24)/bitmap.getWidth(),(dh-24)/bitmap.getHeight());float w=bitmap.getWidth()*scale,h=bitmap.getHeight()*scale;picture.set((dw-w)/2,(dh-h)/2,(dw+w)/2,(dh+h)/2);}
    float sx(float x){return picture.left+x*picture.width();}float sy(float y){return picture.top+y*picture.height();}
@@ -74,7 +109,7 @@ public class CropActivity extends ComponentActivity {
     paint.setColor(0xff00c6ff);paint.setStrokeWidth(4);paint.setStyle(Paint.Style.STROKE);c.drawPath(path,paint);
     paint.setStyle(Paint.Style.FILL);for(int i=0;i<4;i++){float x=sx(corners[i*2]),y=sy(corners[i*2+1]);paint.setColor(Color.WHITE);c.drawCircle(x,y,19,paint);paint.setColor(0xff098ce9);c.drawCircle(x,y,14,paint);}
    }
-   @Override public boolean onTouchEvent(android.view.MotionEvent ev){int a=ev.getActionMasked();if(a==MotionEvent.ACTION_DOWN){frame();float best=Float.MAX_VALUE;for(int i=0;i<4;i++){float dx=ev.getX()-sx(corners[2*i]),dy=ev.getY()-sy(corners[2*i+1]);float dist=dx*dx+dy*dy;if(dist<best){best=dist;selected=i;}}return true;}
+   @Override public boolean onTouchEvent(android.view.MotionEvent ev){int a=ev.getActionMasked();if(a==MotionEvent.ACTION_DOWN){touched=true;frame();float best=Float.MAX_VALUE;for(int i=0;i<4;i++){float dx=ev.getX()-sx(corners[2*i]),dy=ev.getY()-sy(corners[2*i+1]);float dist=dx*dx+dy*dy;if(dist<best){best=dist;selected=i;}}return true;}
     if(a==MotionEvent.ACTION_MOVE&&selected>=0){corners[2*selected]=Math.max(0,Math.min(1,(ev.getX()-picture.left)/picture.width()));corners[2*selected+1]=Math.max(0,Math.min(1,(ev.getY()-picture.top)/picture.height()));invalidate();return true;}
     if(a==MotionEvent.ACTION_UP||a==MotionEvent.ACTION_CANCEL){selected=-1;return true;}return true;}
  }
