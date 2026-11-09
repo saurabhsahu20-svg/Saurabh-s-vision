@@ -21,7 +21,7 @@ public class CameraScreen extends ComponentActivity {
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private PreviewView preview;
     private ImageCapture imageCapture;
-    private Camera camera;
+    private androidx.camera.core.Camera camera;
     private TextView status,shoot,flashButton;
     private volatile boolean processing=false;
     private boolean torch=false;
