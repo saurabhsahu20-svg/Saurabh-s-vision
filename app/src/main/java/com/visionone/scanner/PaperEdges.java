@@ -19,34 +19,9 @@ public final class PaperEdges {
    if(mean(g,w,h,xx,yy)<threshold){consecutive++;if(consecutive>=3)return dx!=0?xx:yy;}else consecutive=0;
   }return -1;
  }
- public static float[] suggest(Bitmap bitmap){
-  int ow=bitmap.getWidth(),oh=bitmap.getHeight();if(ow<120||oh<120)return null;
-  int w=Math.max(120,Math.round(ow*(Math.min(500f/Math.max(ow,oh),1f)))),h=Math.max(120,Math.round(oh*(Math.min(500f/Math.max(ow,oh),1f))));
-  Bitmap sample=Bitmap.createScaledBitmap(bitmap,w,h,true);int[] colors=new int[w*h];sample.getPixels(colors,0,w,0,0,w,h);if(sample!=bitmap)sample.recycle();
-  int[] g=new int[colors.length];for(int i=0;i<colors.length;i++)g[i]=light(colors[i]);
-  ArrayList<Integer> center=new ArrayList<>(),edge=new ArrayList<>();
-  for(int y=h*28/100;y<=h*72/100;y+=Math.max(3,h/18))for(int x=w*28/100;x<=w*72/100;x+=Math.max(3,w/18))center.add(mean(g,w,h,x,y));
-  int[] sides={4,7,10,90,93,96};for(int sy:sides)for(int sx:sides){if(sx>10&&sx<90 && sy>10&&sy<90)continue;edge.add(mean(g,w,h,w*sx/100,h*sy/100));}
-  int inside=median(center),outside=median(edge);
-  if(inside<112||inside-outside<19)return null;
-  int threshold=Math.max(95,Math.min(232,(inside+outside)/2));
-  ArrayList<float[]> left=new ArrayList<>(),right=new ArrayList<>(),top=new ArrayList<>(),bottom=new ArrayList<>();
-  for(int t=30;t<=70;t+=10){int y=h*t/100;
-    int a=locate(g,w,h,w/2,y,-1,0,w/2-3,threshold),b=locate(g,w,h,w/2,y,1,0,w/2-3,threshold);
-    if(a>4&&a<w*40/100)left.add(new float[]{y,a});if(b>w*60/100&&b<w-4)right.add(new float[]{y,b});
-    int x=w*t/100;
-    a=locate(g,w,h,x,h/2,0,-1,h/2-3,threshold);b=locate(g,w,h,x,h/2,0,1,h/2-3,threshold);
-    if(a>4&&a<h*40/100)top.add(new float[]{x,a});if(b>h*60/100&&b<h-4)bottom.add(new float[]{x,b});
-  }
-  float[] l=line(left),r=line(right),t=line(top),b=line(bottom);
-  if(l==null||r==null||t==null||b==null)return null;
-  float[] tl=intersect(l,t),tr=intersect(r,t),br=intersect(r,b),bl=intersect(l,b);
-  if(tl==null||tr==null||br==null||bl==null)return null;
-  float[] out={tl[0]/w,tl[1]/h,tr[0]/w,tr[1]/h,br[0]/w,br[1]/h,bl[0]/w,bl[1]/h};
-  if(!valid(out))return null;
-  for(float p:out)if(p<0.008||p>0.992)return null;
-  return out;
- }
+ /** Returns actual detected document bounds or null; never assumes a preset paper size. */
+ public static float[] suggest(Bitmap bitmap){return OpenCvPaperDetector.detect(bitmap);}
+
  // x = a*y+b and y=c*x+d
  static float[] intersect(float[] vertical,float[] horizontal){
   float denom=1-vertical[0]*horizontal[0];if(Math.abs(denom)<0.03)return null;

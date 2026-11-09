@@ -77,7 +77,7 @@ public class Docs {
    if(output!=source)output.recycle();source.recycle();return auto;
  }
  static void makePdf(Context ctx,List<File> images,File file)throws Exception{
-   String paper=ctx.getSharedPreferences("settings",Context.MODE_PRIVATE).getString("paper","A4");makePdf(ctx,images,file,paper);
+   String paper=ctx.getSharedPreferences("settings",Context.MODE_PRIVATE).getString("paper","Original proportions");makePdf(ctx,images,file,paper);
  }
  static void makePdf(Context ctx,List<File> images,File file,String paper)throws Exception {PdfDocument doc=new PdfDocument();try{
    int number=0;

@@ -74,7 +74,7 @@ public class MainActivity extends ComponentActivity {
       EditText input=new EditText(this);input.setSingleLine();input.setText("Vision_Scan_"+System.currentTimeMillis());input.setHint("PDF file name");box.addView(input);
       box.addView(txt(this,"Select actual paper size for PDF",15,NAVY));
       Spinner spinner=new Spinner(this);spinner.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,PaperEdges.SIZES));box.addView(spinner);
-      String old=getSharedPreferences("settings",MODE_PRIVATE).getString("paper","A4");for(int i=0;i<PaperEdges.SIZES.length;i++)if(PaperEdges.SIZES[i].equals(old))spinner.setSelection(i);
+      String old=getSharedPreferences("settings",MODE_PRIVATE).getString("paper","Original proportions");for(int i=0;i<PaperEdges.SIZES.length;i++)if(PaperEdges.SIZES[i].equals(old))spinner.setSelection(i);
       new AlertDialog.Builder(this).setTitle("Save PDF • Page size").setView(box).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{
         String n=input.getText().toString().replaceAll("[^a-zA-Z0-9_ -]","_").trim();if(n.isEmpty())n="Document";final String name=n,paper=(String)spinner.getSelectedItem();
         getSharedPreferences("settings",MODE_PRIVATE).edit().putString("paper",paper).apply();
