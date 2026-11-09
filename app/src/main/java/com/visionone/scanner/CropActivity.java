@@ -23,6 +23,7 @@ public class CropActivity extends ComponentActivity {
  TextView action(LinearLayout row,String s,Runnable click){
   TextView t=label(s,14,Color.WHITE);t.setBackgroundColor(0xff14599c);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-2,1);p.setMargins(3,4,3,4);row.addView(t,p);t.setOnClickListener(v->click.run());return t;
  }
+ int dp(float value){return (int)(value*getResources().getDisplayMetrics().density+.5f);}
  void build(){LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(0xff07182e);
   root.addView(label("VISION ONE  •  ADJUST DOCUMENT CORNERS",19,Color.WHITE));
   edgeStatus=label("Detecting actual document outline…",13,0xffc9e1ff);root.addView(edgeStatus);
@@ -33,9 +34,7 @@ public class CropActivity extends ComponentActivity {
   action(one,"FULL PHOTO",()->{cropView.corners=PaperEdges.FULL.clone();cropView.invalidate();});
   action(one,"ROTATE ↻",()->{detectionVersion++;Bitmap next=Docs.rotate(image);image.recycle();image=next;turns=(turns+1)%4;cropView.bitmap=image;cropView.corners=defaultCorners();cropView.touched=false;cropView.invalidate();detectEdgesAsync();});
   LinearLayout two=new LinearLayout(this);two.setOrientation(LinearLayout.HORIZONTAL);root.addView(two);
-  sizeSpinner=new Spinner(this);ArrayAdapter<String> sizes=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,PaperEdges.SIZES);sizeSpinner.setAdapter(sizes);two.addView(sizeSpinner,new LinearLayout.LayoutParams(0,54,1));
-  String old=getSharedPreferences("settings",MODE_PRIVATE).getString("paper","Original proportions");for(int i=0;i<PaperEdges.SIZES.length;i++)if(PaperEdges.SIZES[i].equals(old))sizeSpinner.setSelection(i);
-  filterSpinner=new Spinner(this);filterSpinner.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,FILTERS));two.addView(filterSpinner,new LinearLayout.LayoutParams(0,54,1));
+  filterSpinner=new Spinner(this);filterSpinner.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,FILTERS));two.addView(filterSpinner,new LinearLayout.LayoutParams(-1,dp(55)));
   if(getIntent().getBooleanExtra("question",false))filterSpinner.setSelection(3);
   LinearLayout bottom=new LinearLayout(this);root.addView(bottom);
   action(bottom,"CANCEL",this::finish);action(bottom,"✓ APPLY CROP",this::apply);setContentView(root);
@@ -78,7 +77,7 @@ public class CropActivity extends ComponentActivity {
  void apply(){
   if(saving)return;
   final float[] corners=cropView.corners.clone();if(!PaperEdges.valid(corners)){Toast.makeText(this,"Adjust the 4 corners to make a valid page",Toast.LENGTH_LONG).show();return;}
-  saving=true;final int rotation=turns;final String paper=(String)sizeSpinner.getSelectedItem();final int filter=filterSpinner.getSelectedItemPosition();
+  saving=true;final int rotation=turns;final String paper="Original proportions";final int filter=filterSpinner.getSelectedItemPosition();
   Toast.makeText(this,"Processing paper crop…",Toast.LENGTH_SHORT).show();
   new Thread(()->{try{
    Docs.ensureBackup(this,page);
@@ -93,7 +92,6 @@ public class CropActivity extends ComponentActivity {
    File temp=new File(page.getParentFile(),page.getName()+".pending");
    Docs.saveBitmap(output,temp,95);output.recycle();
    Docs.replace(temp,page);
-   getSharedPreferences("settings",MODE_PRIVATE).edit().putString("paper",paper).apply();
    runOnUiThread(()->{setResult(RESULT_OK);finish();});
   }catch(Exception e){runOnUiThread(()->{saving=false;new AlertDialog.Builder(this).setTitle("Crop failed").setMessage(e.getMessage()).setPositiveButton("OK",null).show();});}}).start();
  }

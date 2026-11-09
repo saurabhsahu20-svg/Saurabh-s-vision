@@ -14,35 +14,122 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import com.google.common.util.concurrent.ListenableFuture;
-import java.io.*;
-import java.nio.*;
+import java.io.File;
 import java.util.concurrent.*;
 
 public class CameraScreen extends ComponentActivity {
- ExecutorService worker=Executors.newSingleThreadExecutor(),analyzer=Executors.newSingleThreadExecutor();
- PreviewView preview;ImageCapture capture;TextView status,modeButton;String mode;volatile boolean busy=false,automatic=false,needMovement=false;
- int stableFrames=0;double lastAvg=-1;long lastShot=0;
- @Override public void onCreate(Bundle s){super.onCreate(s);mode=getIntent().getStringExtra("mode");automatic="auto".equals(mode)||"batch".equals(mode);ui();if(ContextCompat.checkSelfPermission(this,Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED)open();else requestPermissions(new String[]{Manifest.permission.CAMERA},10);}
- void ui(){FrameLayout base=new FrameLayout(this);base.setBackgroundColor(0xff04142a);preview=new PreviewView(this);base.addView(preview,new FrameLayout.LayoutParams(-1,-1));TextView title=new TextView(this);title.setText("VISION ONE    •    "+("question".equals(mode)?"QUESTION PAPER":automatic?"AUTO / BATCH":"SMART SCAN"));title.setPadding(18,38,10,30);title.setTextColor(-1);title.setTextSize(18);title.setBackgroundColor(0xbb07214a);base.addView(title,new FrameLayout.LayoutParams(-1,-2,Gravity.TOP));
-  LinearLayout bottom=new LinearLayout(this);bottom.setPadding(10,16,10,20);bottom.setOrientation(LinearLayout.VERTICAL);bottom.setBackgroundColor(0xee061932);
-  status=new TextView(this);status.setText("Point camera at a document");status.setTextColor(-1);status.setGravity(Gravity.CENTER);bottom.addView(status);
-  LinearLayout buttons=new LinearLayout(this);bottom.addView(buttons);
-  add(buttons,"📷 CAPTURE",()->take());modeButton=add(buttons,automatic?"AUTO ON":"AUTO OFF",()->{automatic=!automatic;needMovement=false;stableFrames=0;modeButton.setText(automatic?"AUTO ON":"AUTO OFF");});add(buttons,"DONE ✓",()->{if(busy){Toast.makeText(this,"Finishing page; tap DONE again",Toast.LENGTH_SHORT).show();return;}startActivity(new Intent(this,MainActivity.class).putExtra("showPages",true));finish();});
-  base.addView(bottom,new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM));setContentView(base);
- }
- TextView add(LinearLayout parent,String text,Runnable action){TextView b=new TextView(this);b.setText(text);b.setTextSize(14);b.setTextColor(-1);b.setGravity(Gravity.CENTER);b.setPadding(10,20,10,20);parent.addView(b,new LinearLayout.LayoutParams(0,-2,1));b.setOnClickListener(v->action.run());return b;}
- void open(){ListenableFuture<ProcessCameraProvider> f=ProcessCameraProvider.getInstance(this);f.addListener(()->{try{ProcessCameraProvider p=f.get();Preview pv=new Preview.Builder().build();pv.setSurfaceProvider(preview.getSurfaceProvider());capture=new ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).build();
-   ImageAnalysis ia=new ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).setTargetResolution(new android.util.Size(640,480)).build();ia.setAnalyzer(analyzer,frame->{try{if(!automatic||busy)return;ImageProxy.PlaneProxy pl=frame.getPlanes()[0];ByteBuffer buf=pl.getBuffer();int stride=pl.getRowStride();int w=frame.getWidth(),h=frame.getHeight();int n=0,sum=0,edge=0;
-     for(int y=h/3;y<h*2/3;y+=20)for(int x=w/3;x<w*2/3;x+=20){int pos=y*stride+x;if(pos<buf.limit()){sum+=buf.get(pos)&255;n++;}}
-     if(n==0)return;double avg=sum/(double)n;int corners=0,cornerN=0;for(int y=15;y<h;y+=h-30)for(int x=15;x<w;x+=w-30){int pos=y*stride+x;if(pos<buf.limit()){corners+=buf.get(pos)&255;cornerN++;}}
-     boolean sheet=cornerN>0&&avg>105&&avg-corners/(double)cornerN>8;boolean moved=lastAvg>=0&&Math.abs(avg-lastAvg)>12;
-     if(needMovement){if(moved){needMovement=false;stableFrames=0;}}else if(sheet&&!moved){stableFrames++;if(stableFrames>26&&System.currentTimeMillis()-lastShot>4000){stableFrames=0;runOnUiThread(this::take);}}else stableFrames=0;lastAvg=avg;
-   }catch(Exception ignored){}finally{frame.close();}});p.unbindAll();p.bindToLifecycle(this,CameraSelector.DEFAULT_BACK_CAMERA,pv,capture,ia);
- }catch(Exception e){status.setText("Camera error: "+e.getMessage());}},ContextCompat.getMainExecutor(this));}
- void take(){if(busy||capture==null)return;busy=true;lastShot=System.currentTimeMillis();status.setText("Capturing high-quality document…");File f=Docs.newPage(this);ImageCapture.OutputFileOptions opt=new ImageCapture.OutputFileOptions.Builder(f).build();capture.takePicture(opt,ContextCompat.getMainExecutor(this),new ImageCapture.OnImageSavedCallback(){
- @Override public void onImageSaved(ImageCapture.OutputFileResults r){worker.execute(()->{try{boolean cropped=Docs.processCapture(CameraScreen.this,f,mode);int n=Docs.session(CameraScreen.this).listFiles((d,name)->name.endsWith(".jpg")).length;runOnUiThread(()->status.setText("Page "+n+(cropped?" • Auto cropped":" • Manual crop available")+" • DONE to review"));}catch(Exception e){runOnUiThread(()->status.setText("Saved image; review crop later: "+e.getMessage()));}finally{busy=false;needMovement=automatic;}});}
- @Override public void onError(ImageCaptureException e){busy=false;status.setText("Capture failed: "+e.getMessage());}
- });}
- @Override public void onRequestPermissionsResult(int request,String[] perms,int[] grant){super.onRequestPermissionsResult(request,perms,grant);if(request==10&&grant.length>0&&grant[0]==PackageManager.PERMISSION_GRANTED)open();else{status.setText("Camera permission denied. Import images from Home instead.");}}
- @Override protected void onDestroy(){super.onDestroy();analyzer.shutdownNow();worker.shutdown();}
+    private final ExecutorService worker=Executors.newSingleThreadExecutor();
+    private PreviewView preview;
+    private ImageCapture imageCapture;
+    private Camera camera;
+    private TextView status,shoot,flashButton;
+    private volatile boolean processing=false;
+    private boolean torch=false;
+    private int count=0;
+
+    private int dp(float dp){return (int)(getResources().getDisplayMetrics().density*dp+.5f);}
+    @Override public void onCreate(Bundle b){
+        super.onCreate(b);
+        File[] files=Docs.session(this).listFiles((dir,name)->name.endsWith(".jpg"));
+        count=files==null?0:files.length;
+        buildUi();
+        if(ContextCompat.checkSelfPermission(this,Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED)bindCamera();
+        else requestPermissions(new String[]{Manifest.permission.CAMERA},15);
+    }
+    private TextView text(String label,int size){
+        TextView t=new TextView(this);t.setText(label);t.setTextSize(size);t.setTextColor(0xffffffff);
+        t.setGravity(Gravity.CENTER);t.setPadding(dp(8),dp(15),dp(8),dp(15));return t;
+    }
+    private void buildUi(){
+        FrameLayout root=new FrameLayout(this);root.setBackgroundColor(0xff020b19);
+        preview=new PreviewView(this);root.addView(preview,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout top=new LinearLayout(this);top.setOrientation(LinearLayout.VERTICAL);top.setBackgroundColor(0xbb061b3e);
+        TextView brand=text("VISION ONE   •   DOCUMENT SCAN",19);
+        top.addView(brand);
+        TextView help=text("Place the entire paper inside the camera view",13);help.setTextColor(0xffd8eaff);top.addView(help);
+        root.addView(top,new FrameLayout.LayoutParams(-1,-2,Gravity.TOP));
+        LinearLayout bottom=new LinearLayout(this);bottom.setOrientation(LinearLayout.VERTICAL);
+        bottom.setPadding(dp(12),dp(18),dp(12),dp(25));bottom.setBackgroundColor(0xee07182d);
+        status=text("Ready • "+count+" page(s) captured",14);bottom.addView(status);
+        LinearLayout buttons=new LinearLayout(this);bottom.addView(buttons);
+        flashButton=text("⚡ FLASH",14);buttons.addView(flashButton,new LinearLayout.LayoutParams(0,dp(68),1));
+        flashButton.setOnClickListener(v->toggleFlash());
+        shoot=text("●  SCAN",19);shoot.setTypeface(null,1);shoot.setBackgroundColor(0xff0879eb);
+        LinearLayout.LayoutParams capture=new LinearLayout.LayoutParams(0,dp(68),2);capture.setMargins(dp(3),0,dp(3),0);
+        buttons.addView(shoot,capture);shoot.setOnClickListener(v->take());
+        TextView done=text("✓ DONE",15);buttons.addView(done,new LinearLayout.LayoutParams(0,dp(68),1));
+        done.setOnClickListener(v->done());
+        TextView hint=text("Scan another page or tap DONE to crop and create PDF",12);hint.setTextColor(0xffa9c9e8);bottom.addView(hint);
+        root.addView(bottom,new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM));setContentView(root);
+    }
+    private void bindCamera(){
+        ListenableFuture<ProcessCameraProvider> future=ProcessCameraProvider.getInstance(this);
+        future.addListener(()->{
+            try{
+                ProcessCameraProvider provider=future.get();
+                Preview p=new Preview.Builder().build();
+                p.setSurfaceProvider(preview.getSurfaceProvider());
+                imageCapture=new ImageCapture.Builder()
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                    .build();
+                provider.unbindAll();
+                camera=provider.bindToLifecycle(this,CameraSelector.DEFAULT_BACK_CAMERA,p,imageCapture);
+                if(camera==null)status.setText("Camera not available");
+            }catch(Exception e){status.setText("Camera error: "+e.getMessage());}
+        },ContextCompat.getMainExecutor(this));
+    }
+    private void toggleFlash(){
+        if(camera==null)return;
+        if(!camera.getCameraInfo().hasFlashUnit()){
+            Toast.makeText(this,"Flash not supported",Toast.LENGTH_SHORT).show();return;
+        }
+        torch=!torch;camera.getCameraControl().enableTorch(torch);
+        flashButton.setText(torch?"⚡ ON":"⚡ FLASH");
+    }
+    private void take(){
+        if(processing)return;
+        if(imageCapture==null){Toast.makeText(this,"Camera is not ready",Toast.LENGTH_SHORT).show();return;}
+        processing=true;shoot.setEnabled(false);
+        status.setText("Capturing and finding document edges…");
+        File target=Docs.newPage(this);
+        ImageCapture.OutputFileOptions opts=new ImageCapture.OutputFileOptions.Builder(target).build();
+        imageCapture.takePicture(opts,ContextCompat.getMainExecutor(this),new ImageCapture.OnImageSavedCallback(){
+            @Override public void onImageSaved(ImageCapture.OutputFileResults result){
+                worker.execute(()->{
+                    boolean cropped=false;String error=null;
+                    try{cropped=Docs.processCapture(CameraScreen.this,target,"smart");}
+                    catch(Throwable e){error=e.getMessage();}
+                    File[] files=Docs.session(CameraScreen.this).listFiles((dir,name)->name.endsWith(".jpg"));
+                    final int current=files==null?0:files.length;
+                    final boolean success=cropped;
+                    final String failure=error;
+                    runOnUiThread(()->{
+                        processing=false;shoot.setEnabled(true);count=current;
+                        status.setText(failure==null?
+                            count+" page(s) • "+(success?"Edges detected":"Manual crop available") :
+                            count+" page(s) • Check crop manually");
+                    });
+                });
+            }
+            @Override public void onError(ImageCaptureException exception){
+                target.delete();processing=false;shoot.setEnabled(true);
+                status.setText("Capture failed: "+exception.getMessage());
+            }
+        });
+    }
+    private void done(){
+        if(processing){Toast.makeText(this,"Finishing scan; tap DONE again",Toast.LENGTH_SHORT).show();return;}
+        Intent next=new Intent(this,MainActivity.class);
+        next.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        next.putExtra("showPages",true);
+        startActivity(next);finish();
+    }
+    @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] grants){
+        super.onRequestPermissionsResult(code,permissions,grants);
+        if(code==15&&grants.length>0&&grants[0]==PackageManager.PERMISSION_GRANTED)bindCamera();
+        else new AlertDialog.Builder(this).setTitle("Camera permission")
+                .setMessage("VISION ONE needs camera access to scan documents. You can still import photos without it.")
+                .setPositiveButton("Back",(d,w)->finish()).show();
+    }
+    @Override protected void onDestroy(){worker.shutdown();super.onDestroy();}
 }
