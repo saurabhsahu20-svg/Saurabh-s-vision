@@ -2,9 +2,14 @@ name: Build Vision Walls Android APK
 on:
   push:
     paths:
-      - 'vision-walls/**'
+      - 'vision-walls/app/**'
+      - 'vision-walls/build.gradle'
+      - 'vision-walls/settings.gradle'
+      - 'vision-walls/gradle.properties'
       - '.github/workflows/vision-walls-build.yml'
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,7 +27,7 @@ jobs:
           SDKMANAGER=$(find /usr/local/lib/android/sdk/cmdline-tools -name sdkmanager -type f | head -n 1)
           test -n "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
+          "$SDKMANAGER" 'platforms;android-35' 'build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
@@ -31,6 +36,17 @@ jobs:
       - name: Upload free APK
         uses: actions/upload-artifact@v4
         with:
-          name: Vision-Walls-Free-APK
+          name: Vision-Walls-Education-v1.1
           path: vision-walls/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 90
+      - name: Publish public APK
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p download
+          cp app/build/outputs/apk/debug/app-debug.apk download/Vision_Walls_Free_v1.1.apk
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add download/Vision_Walls_Free_v1.1.apk
+          git diff --cached --quiet && exit 0
+          git commit -m 'Publish Vision Walls Education APK v1.1 [skip ci]'
+          git push

@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
     private void renderHome(){
         LinearLayout root=column();root.setBackgroundColor(navy);root.setPadding(dp(14),dp(14),dp(14),dp(7));setContentView(root);
         TextView brand=label("✦  VISION WALLS",27,Color.WHITE,true);root.addView(brand);
-        TextView subtitle=label("240 Wallpapers  •  240 Live  •  240 Widgets",12,muted,false);
+        TextView subtitle=label("270 Wallpapers  •  270 Live  •  270 Clock Themes",12,muted,false);
         LinearLayout.LayoutParams sublp=new LinearLayout.LayoutParams(-1,dp(30));root.addView(subtitle,sublp);
         LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(LinearLayout.HORIZONTAL);tabs.setWeightSum(3);
         String[] names={"WALLPAPERS","LIVE","WIDGETS"};
@@ -56,7 +56,7 @@ public class MainActivity extends Activity {
         }
         root.addView(tabs);
         Spinner category=new Spinner(this);
-        ArrayList<String> categories=new ArrayList<>();categories.add("All 24 categories");
+        ArrayList<String> categories=new ArrayList<>();categories.add("All 27 categories");
         for(String c:Art.CATEGORIES)categories.add(c);
         ArrayAdapter<String> spinAdapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,categories);
         category.setAdapter(spinAdapter);category.setSelection(filter);
@@ -113,12 +113,19 @@ public class MainActivity extends Activity {
         Button primary=new Button(this);primary.setText(action);primary.setTextColor(navy);
         primary.setBackground(background(cyan,0,12));
         LinearLayout.LayoutParams blp=new LinearLayout.LayoutParams(-1,dp(52));blp.setMargins(0,dp(10),0,dp(4));body.addView(primary,blp);
-        primary.setOnClickListener(v->{dialog.dismiss();if(mode==0)setStatic(id);else if(mode==1)setLive(id);else pinWidget(id);});
+        primary.setOnClickListener(v->{dialog.dismiss();if(mode==0)setStatic(id);else if(mode==1)setLive(id);else pinWidget(id,false);});
         if(mode==0){Button save=new Button(this);save.setText("SAVE ORIGINAL FULL HD IMAGE");
             save.setTextColor(Color.WHITE);save.setBackground(background(card,0xFF35517B,12));
             body.addView(save,new LinearLayout.LayoutParams(-1,dp(50)));
             save.setOnClickListener(v->{dialog.dismiss();saveImage(id);});}
-        else if(mode==2){TextView help=label("Or long-press your home screen → Widgets → Vision Walls to choose any of 240 designs.",12,muted,false);
+        else if(mode==2){
+            Button compact=new Button(this);
+            compact.setText("ADD COMPACT CLOCK 2x2");
+            compact.setTextColor(Color.WHITE);
+            compact.setBackground(background(card,0xFF35517B,12));
+            body.addView(compact,new LinearLayout.LayoutParams(-1,dp(50)));
+            compact.setOnClickListener(v->{dialog.dismiss();pinWidget(id,true);});
+            TextView help=label("Or long-press Home → Widgets → Vision Walls. Clock and date update automatically.",12,muted,false);
             help.setPadding(dp(2),dp(9),dp(2),0);body.addView(help);}
         dialog.setContentView(body);if(dialog.getWindow()!=null){dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             dialog.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels*.95f),-2);}dialog.show();
@@ -154,11 +161,11 @@ public class MainActivity extends Activity {
             i.putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,new ComponentName(this,VisionLiveService.class));startActivity(i);
         }catch(Exception e){toast("Live wallpapers are not supported by this device");}
     }
-    private void pinWidget(int id){
+    private void pinWidget(int id,boolean compact){
         getSharedPreferences("vision_walls",MODE_PRIVATE).edit().putInt("widget_default",id).apply();
         AppWidgetManager wm=AppWidgetManager.getInstance(this);
         if(Build.VERSION.SDK_INT>=26 && wm.isRequestPinAppWidgetSupported()){
-            wm.requestPinAppWidget(new ComponentName(this,VisionWidgetProvider.class),null,null);
+            wm.requestPinAppWidget(new ComponentName(this,compact?VisionCompactWidgetProvider.class:VisionWidgetProvider.class),null,null);
             toast("Choose Add; customize when prompted");
         }else toast("Long-press Home screen → Widgets → Vision Walls");
     }

@@ -5,12 +5,13 @@ import java.util.Random;
 
 /** Original, deterministic procedural artwork: 24 subjects × 10 color variants. */
 public final class Art {
-    public static final int COUNT = 240;
+    public static final int COUNT = 270;
     public static final String[] CATEGORIES = {
       "Galaxies", "Mountains", "Flowers", "Neon", "Ocean", "Planets",
       "Geometry", "Aurora", "Wildlife", "Cyberpunk", "Mandala", "Abstract",
       "Deep Space", "Sunsets", "Botanical", "Laser Art", "Beaches", "Moons",
-      "Minimal", "Northern Lights", "Animals", "City Lights", "Lotus", "Textures"
+      "Minimal", "Northern Lights", "Animals", "City Lights", "Lotus", "Textures",
+      "Maths Magic", "Science Discoveries", "Study & Success"
     };
     private static final int[] TONES = {
        0xFF53D9FF,0xFF9F80FF,0xFFFFC765,0xFFFF4ED9,0xFF4EF7B8,
@@ -31,6 +32,7 @@ public final class Art {
     }
     public static void draw(Canvas c,int id,int w,int h,float t) {
         id=Math.floorMod(id,COUNT);
+        if(id>=240){PosterArt.draw(c,id-240,w,h,t);return;}
         int family=id/10, variation=id%10, main=accent(id), second=TONES[(family+4+variation)%TONES.length];
         Random r=new Random(id*9959L+703);
         Paint base=p(Color.BLACK);

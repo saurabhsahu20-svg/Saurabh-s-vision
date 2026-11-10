@@ -1,35 +1,18 @@
-# ✦ VISION WALLS — Wallpapers, Live Themes & Widgets
+# VISION WALLS 1.1 — Education Edition
+Free Android wallpaper app (Java, Gradle, Android 8.0+).
 
-**Free, ad-free, offline Android wallpaper studio.**
-
-- **240 static wallpaper presets** (24 categories × 10 palettes), rendered at full-HD 1080×1920 when saved or applied.
-- **240 animated live wallpaper presets** drawn dynamically by a real Android `WallpaperService`, paused when not visible.
-- **240 customizable clock-widget styles**, independently selectable for each widget instance through a standard Android widget configuration screen.
-- Simple dark navy UI; live previews; category filters; Save via Android's document picker; one-tap set wallpaper; pinned widget support; privacy-friendly (no network permission, no analytics, no ads).
-
-These are **procedurally generated artistic variations** (not 720 separately hand-illustrated artworks, videos, or widget APKs). Different presets share visual engines; each of the three modes has 240 selectable combinations.
-
-## Free public APK download
-
-[Download VISION WALLS APK directly](https://raw.githubusercontent.com/saurabhsahu20-svg/Saurabh-s-vision/main/vision-walls/download/Vision_Walls_Free_v1.0.apk) — no account or payment needed; Android 8.0+; debug-signed, not yet device-tested.
+## Categories
+- 240 original procedural themes in 24 categories.
+- 30 additional **original math, science, and study poster-style** designs, rendered by the Android Canvas engine.
+- Every design can be used as a static wallpaper or an animated live wallpaper; the art stays consistent, with glow and particle animation in live mode.
+- 270 separately selectable themed clock/date widget styles, available as 4x2 and compact 2x2. System TextClock displays current device-local time and date.
+- Offline / no ads / no accounts.
 
 ## Build
+Open this directory as an Android project or run `gradle assembleDebug` with Android SDK 35 + JDK 17. GitHub Actions publishes the built debug APK at `download/Vision_Walls_Free_v1.1.apk`.
 
-1. Open `vision-walls/` in Android Studio (Android SDK API 35, JDK 17).
-2. Sync Gradle and build `app` (`gradle assembleDebug`).
-3. Install `app/build/outputs/apk/debug/app-debug.apk` on Android 8+.
-
-Or download the `Vision-Walls-Free-APK` build artifact from the repository's **Actions → Build Vision Walls Android APK** run (artifacts may require GitHub login to download). This is a **debug-signed build**, suitable for testing; signing and device testing are recommended before store releases.
-
-## Android implementation
-
-- Native Java, no external runtime libraries.
-- `Art.java`: original drawing engine that generates color-rich vector-like pictures and animation frames.
-- `VisionLiveService.java`: Android `WallpaperService` engine (~11 FPS, stops when hidden).
-- `VisionWidgetProvider.java`: Android home-screen clock/date widget renderer.
-- `WidgetConfigActivity.java`: per-widget style picker.
-- `MainActivity.java`: accessible categories, previews, saving, wallpaper apply and widget pin request.
+## Originality
+Poster-style artwork is created programmatically, inspired by math/learning aesthetics; no Pinterest image content is redistributed. Additional full-resolution poster images may be downloaded separately from the ChatGPT conversation.
 
 ## License
-
-MIT License. All code and procedural designs in this project are offered free to use and modify, with attribution. The collection does not require a paid service or an internet connection.
+Source MIT (see LICENSE). No tracking or network permissions.

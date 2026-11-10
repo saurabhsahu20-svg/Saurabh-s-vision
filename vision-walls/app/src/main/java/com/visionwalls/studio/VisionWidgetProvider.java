@@ -1,6 +1,7 @@
 package com.visionwalls.studio;
 
 import android.appwidget.AppWidgetManager;
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +23,9 @@ public final class VisionWidgetProvider extends AppWidgetProvider {
         views.setTextColor(R.id.widget_name,Color.WHITE);
         views.setTextColor(R.id.widget_clock,Color.WHITE);
         views.setTextColor(R.id.widget_date,Color.WHITE);
+        PendingIntent click=PendingIntent.getActivity(context,widgetId,new Intent(context,MainActivity.class),
+                 PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        views.setOnClickPendingIntent(R.id.widget_root,click);
         manager.updateAppWidget(widgetId,views);
     }
 }

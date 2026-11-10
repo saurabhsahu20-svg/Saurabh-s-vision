@@ -21,7 +21,7 @@ public final class WidgetConfigActivity extends Activity {
         widgetId=getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,AppWidgetManager.INVALID_APPWIDGET_ID);
         if(widgetId==AppWidgetManager.INVALID_APPWIDGET_ID){finish();return;}
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(12,16,12,12);root.setBackgroundColor(0xFF071125);
-        TextView h=new TextView(this);h.setText("Choose a widget style • 240 designs");h.setTextColor(Color.WHITE);h.setTextSize(20);h.setPadding(8,8,8,18);root.addView(h);
+        TextView h=new TextView(this);h.setText("Choose a widget style • 270 designs");h.setTextColor(Color.WHITE);h.setTextSize(20);h.setPadding(8,8,8,18);root.addView(h);
         GridView grid=new GridView(this);grid.setNumColumns(2);grid.setHorizontalSpacing(8);grid.setVerticalSpacing(8);
         grid.setAdapter(new BaseAdapter(){
             public int getCount(){return Art.COUNT;}public Object getItem(int p){return p;}public long getItemId(int p){return p;}
@@ -34,7 +34,11 @@ public final class WidgetConfigActivity extends Activity {
         });root.addView(grid,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);
         grid.setOnItemClickListener((a,v,pos,id)->{
             getSharedPreferences("vision_walls",MODE_PRIVATE).edit().putInt("widget_"+widgetId,pos).apply();
-            VisionWidgetProvider.update(this,AppWidgetManager.getInstance(this),widgetId);
+            AppWidgetManager mgr=AppWidgetManager.getInstance(this);
+            android.appwidget.AppWidgetProviderInfo info=mgr.getAppWidgetInfo(widgetId);
+            if(info!=null && info.provider!=null && info.provider.getClassName().contains("VisionCompact"))
+                VisionCompactWidgetProvider.update(this,mgr,widgetId);
+            else VisionWidgetProvider.update(this,mgr,widgetId);
             Intent ok=new Intent();ok.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,widgetId);setResult(RESULT_OK,ok);finish();
         });
     }
