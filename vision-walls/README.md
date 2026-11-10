@@ -9,6 +9,10 @@
 
 These are **procedurally generated artistic variations** (not 720 separately hand-illustrated artworks, videos, or widget APKs). Different presets share visual engines; each of the three modes has 240 selectable combinations.
 
+## Free public APK download
+
+[Download VISION WALLS APK directly](https://raw.githubusercontent.com/saurabhsahu20-svg/Saurabh-s-vision/main/vision-walls/download/Vision_Walls_Free_v1.0.apk) — no account or payment needed; Android 8.0+; debug-signed, not yet device-tested.
+
 ## Build
 
 1. Open `vision-walls/` in Android Studio (Android SDK API 35, JDK 17).
