@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-feature android:name="android.software.live_wallpaper" android:required="false" />
-    <application android:label="Vision Walls" android:theme="@android:style/Theme.Material.NoActionBar" android:icon="@drawable/ic_launcher" android:allowBackup="false" android:supportsRtl="true">
+    <application android:label="Vision Digital Walls" android:theme="@android:style/Theme.Material.NoActionBar" android:icon="@drawable/ic_launcher" android:allowBackup="false" android:supportsRtl="true">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity>
@@ -10,11 +10,17 @@
             <intent-filter><action android:name="android.service.wallpaper.WallpaperService" /></intent-filter>
             <meta-data android:name="android.service.wallpaper" android:resource="@xml/live_wallpaper" />
         </service>
-        <receiver android:name=".VisionWidgetProvider" android:exported="true" android:label="Vision Walls Clock">
-            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+        <receiver android:name=".VisionWidgetProvider" android:exported="true" android:label="Vision Digital Clock">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+                <action android:name="android.intent.action.BATTERY_LOW" />
+                <action android:name="android.intent.action.BATTERY_OKAY" />
+            </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_info" />
         </receiver>
-        <receiver android:name=".VisionCompactWidgetProvider" android:exported="true" android:label="Vision Walls Clock Compact">
+        <receiver android:name=".VisionCompactWidgetProvider" android:exported="true" android:label="Vision Digital Clock Compact">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/compact_widget_info" />
         </receiver>
