@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 import android.widget.*;
 import android.util.LruCache;
 
-/** Standard Android widget setup: user selects one of 240 per-widget presets. */
+/** Standard Android widget setup: user selects one of 240 digital presets. */
 public final class WidgetConfigActivity extends Activity {
     private int widgetId=AppWidgetManager.INVALID_APPWIDGET_ID;
     private final LruCache<Integer,Bitmap> cache=new LruCache<Integer,Bitmap>(10*1024*1024){
@@ -21,7 +21,7 @@ public final class WidgetConfigActivity extends Activity {
         widgetId=getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,AppWidgetManager.INVALID_APPWIDGET_ID);
         if(widgetId==AppWidgetManager.INVALID_APPWIDGET_ID){finish();return;}
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(12,16,12,12);root.setBackgroundColor(0xFF071125);
-        TextView h=new TextView(this);h.setText("Choose a widget style • 270 designs");h.setTextColor(Color.WHITE);h.setTextSize(20);h.setPadding(8,8,8,18);root.addView(h);
+        TextView h=new TextView(this);h.setText("Choose digital clock widget • 240 designs");h.setTextColor(Color.WHITE);h.setTextSize(20);h.setPadding(8,8,8,18);root.addView(h);
         GridView grid=new GridView(this);grid.setNumColumns(2);grid.setHorizontalSpacing(8);grid.setVerticalSpacing(8);
         grid.setAdapter(new BaseAdapter(){
             public int getCount(){return Art.COUNT;}public Object getItem(int p){return p;}public long getItemId(int p){return p;}
