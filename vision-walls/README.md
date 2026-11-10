@@ -1,18 +1,24 @@
-# VISION WALLS 1.1 — Education Edition
-Free Android wallpaper app (Java, Gradle, Android 8.0+).
+# VISION DIGITAL WALLS 2.0 — Science & Mathematics Edition
 
-## Categories
-- 240 original procedural themes in 24 categories.
-- 30 additional **original math, science, and study poster-style** designs, rendered by the Android Canvas engine.
-- Every design can be used as a static wallpaper or an animated live wallpaper; the art stays consistent, with glow and particle animation in live mode.
-- 270 separately selectable themed clock/date widget styles, available as 4x2 and compact 2x2. System TextClock displays current device-local time and date.
-- Offline / no ads / no accounts.
+Android app (Java / Gradle / Android 8.0+) for **new digital STEM wallpapers**, real live wallpaper animations, and functional digital home widgets.
 
-## Build
-Open this directory as an Android project or run `gradle assembleDebug` with Android SDK 35 + JDK 17. GitHub Actions publishes the built debug APK at `download/Vision_Walls_Free_v1.1.apk`.
+## What changed
+- Old 270 landscape, posters, natural scenes, and clock-theme artwork have been removed from the app's catalogue.
+- **240 unique, deterministic digital designs (12 categories × 20 variations)** are drawn offline through Android Canvas.
+- Categories: Digital Atom, Mathematical Graphs, Molecular Matrix, DNA Helix, Digital Heart, Kidney & Nephron, Cells & Tissues, Cyber Circuits, Fractal Geometry, Solar System HUD, Digital Botany, Quantum Waves.
+- The same 240 original digital scenes can be used as animated live wallpapers. Actual artwork elements animate with time; backgrounds are not a static GIF preview.
+- Digital widgets: full and compact layouts with true device-local time and date via TextClock, plus genuine device battery level refreshed on widget updates and charging events.
+- Dark navy / neon cyan / purple / gradient palette, offline art, no login, no ads, no tracking.
 
-## Originality
-Poster-style artwork is created programmatically, inspired by math/learning aesthetics; no Pinterest image content is redistributed. Additional full-resolution poster images may be downloaded separately from the ChatGPT conversation.
+**Note:** This is a wallpaper + widget Android app, not yet a full Android home launcher replacement. Weather is not included because it would need a live data provider and internet; the app never shows fake weather.
 
-## License
-Source MIT (see LICENSE). No tracking or network permissions.
+## Install and build
+Open `vision-walls/` in Android Studio (JDK 17, Android SDK 35) or run `gradle assembleDebug` from that folder.
+
+A GitHub Actions workflow builds and uploads a test APK artifact after source changes; verify a successful run before downloading. APKs already present in `download/` are old v1.x builds **and do not contain these updates**.
+
+## Privacy
+Everything is locally generated and requires no network access. Wallpapers are original procedural designs and not copies of online reference images.
+
+## Validation status
+Source updates are committed on branch `vision-walls-digital-2026`. Android compilation and device verification are required before marking this version installable.
