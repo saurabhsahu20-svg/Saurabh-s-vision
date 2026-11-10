@@ -36,17 +36,17 @@ jobs:
       - name: Upload free APK
         uses: actions/upload-artifact@v4
         with:
-          name: Vision-Walls-Education-v1.1
+          name: VISION_DIGITAL_WALLS_2_0_APK
           path: vision-walls/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 90
       - name: Publish public APK
         if: github.ref == 'refs/heads/main'
         run: |
           mkdir -p download
-          cp app/build/outputs/apk/debug/app-debug.apk download/Vision_Walls_Free_v1.1.apk
+          cp app/build/outputs/apk/debug/app-debug.apk download/Vision_Digital_Walls_v2.0.apk
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add download/Vision_Walls_Free_v1.1.apk
           git diff --cached --quiet && exit 0
-          git commit -m 'Publish Vision Walls Education APK v1.1 [skip ci]'
+          git commit -m 'Publish Vision Digital Walls APK v2.0 [skip ci]'
           git push
