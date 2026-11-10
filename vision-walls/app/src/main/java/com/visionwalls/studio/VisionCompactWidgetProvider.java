@@ -28,7 +28,7 @@ public final class VisionCompactWidgetProvider extends AppWidgetProvider {
     }
     public static void update(Context ctx,AppWidgetManager mgr,int wid){
         android.content.SharedPreferences pref=ctx.getSharedPreferences("vision_walls",Context.MODE_PRIVATE);
-        int id=Math.floorMod(pref.getInt("widget_"+wid,pref.getInt("widget_default",240)),Art.COUNT);
+        int id=Math.floorMod(pref.getInt("widget_"+wid,pref.getInt("widget_default",0)),Art.COUNT);
         RemoteViews rv=new RemoteViews(ctx.getPackageName(),R.layout.vision_widget_compact);
         Bitmap bitmap=Art.bitmap(id,450,450,0);
         rv.setImageViewBitmap(R.id.widget_background,bitmap);
