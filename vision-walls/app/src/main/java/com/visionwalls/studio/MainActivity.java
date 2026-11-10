@@ -43,8 +43,8 @@ public class MainActivity extends Activity {
     private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
     private void renderHome(){
         LinearLayout root=column();root.setBackgroundColor(navy);root.setPadding(dp(14),dp(14),dp(14),dp(7));setContentView(root);
-        TextView brand=label("✦  VISION WALLS",27,Color.WHITE,true);root.addView(brand);
-        TextView subtitle=label("270 Wallpapers  •  270 Live  •  270 Clock Themes",12,muted,false);
+        TextView brand=label("✦  VISION DIGITAL WALLS",27,Color.WHITE,true);root.addView(brand);
+        TextView subtitle=label("240 Digital Wallpapers  •  240 Live Themes  •  Digital Widgets",12,muted,false);
         LinearLayout.LayoutParams sublp=new LinearLayout.LayoutParams(-1,dp(30));root.addView(subtitle,sublp);
         LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(LinearLayout.HORIZONTAL);tabs.setWeightSum(3);
         String[] names={"WALLPAPERS","LIVE","WIDGETS"};
@@ -56,7 +56,7 @@ public class MainActivity extends Activity {
         }
         root.addView(tabs);
         Spinner category=new Spinner(this);
-        ArrayList<String> categories=new ArrayList<>();categories.add("All 27 categories");
+        ArrayList<String> categories=new ArrayList<>();categories.add("All 12 digital categories");
         for(String c:Art.CATEGORIES)categories.add(c);
         ArrayAdapter<String> spinAdapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,categories);
         category.setAdapter(spinAdapter);category.setSelection(filter);
@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
             @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
         });
         TextView hint=label(mode==0?"Tap an artwork to preview, apply or save":
-                mode==1?"Animated art • tap to preview and set":"Pick a style • add a live clock widget",13,muted,false);
+                mode==1?"Animated digital science art • tap to apply":"Clock • Date • Battery • choose a digital widget theme",13,muted,false);
         root.addView(hint,new LinearLayout.LayoutParams(-1,dp(34)));
         grid=new GridView(this);grid.setNumColumns(2);grid.setVerticalSpacing(dp(10));grid.setHorizontalSpacing(dp(10));
         grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);grid.setClipToPadding(false);
@@ -80,7 +80,7 @@ public class MainActivity extends Activity {
     }
     private void refresh(){
         if(adapter==null)return;shown.clear();
-        for(int i=0;i<Art.COUNT;i++)if(filter==0 || i/10==filter-1)shown.add(i);
+        for(int i=0;i<Art.COUNT;i++)if(filter==0 || i/Art.PER_CATEGORY==filter-1)shown.add(i);
         adapter.notifyDataSetChanged();if(grid!=null)grid.setSelection(0);
     }
     private class ImageAdapter extends android.widget.BaseAdapter {
@@ -99,17 +99,17 @@ public class MainActivity extends Activity {
             int id=shown.get(position);String key="s"+id;
             Bitmap b=thumbs.get(key);if(b==null){b=Art.bitmap(id,200,310,0);thumbs.put(key,b);}
             preview.setImageBitmap(b);
-            title.setText(Art.CATEGORIES[id/10]+"  #"+(id%10+1));return box;
+            title.setText(Art.CATEGORIES[id/Art.PER_CATEGORY]+"  #"+(id%Art.PER_CATEGORY+1));return box;
         }
     }
     private void showDetail(int id){
         Dialog dialog=new Dialog(this);LinearLayout body=column();body.setPadding(dp(14),dp(12),dp(14),dp(14));
         body.setBackground(background(navy,0xFF35517B,20));
-        TextView title=label(Art.CATEGORIES[id/10]+"  •  Design "+(id%10+1),18,Color.WHITE,true);
+        TextView title=label(Art.CATEGORIES[id/Art.PER_CATEGORY]+"  •  Design "+(id%Art.PER_CATEGORY+1),18,Color.WHITE,true);
         body.addView(title,new LinearLayout.LayoutParams(-1,dp(36)));
         ImageView sample=new ImageView(this);sample.setScaleType(ImageView.ScaleType.FIT_CENTER);
         sample.setImageBitmap(Art.bitmap(id,540,850,0));body.addView(sample,new LinearLayout.LayoutParams(-1,dp(475)));
-        String action=mode==0?"SET AS WALLPAPER":mode==1?"SET LIVE WALLPAPER":"ADD HOME WIDGET";
+        String action=mode==0?"SET AS WALLPAPER":mode==1?"SET LIVE WALLPAPER":"ADD DIGITAL WIDGET";
         Button primary=new Button(this);primary.setText(action);primary.setTextColor(navy);
         primary.setBackground(background(cyan,0,12));
         LinearLayout.LayoutParams blp=new LinearLayout.LayoutParams(-1,dp(52));blp.setMargins(0,dp(10),0,dp(4));body.addView(primary,blp);
@@ -120,12 +120,12 @@ public class MainActivity extends Activity {
             save.setOnClickListener(v->{dialog.dismiss();saveImage(id);});}
         else if(mode==2){
             Button compact=new Button(this);
-            compact.setText("ADD COMPACT CLOCK 2x2");
+            compact.setText("ADD COMPACT DIGITAL WIDGET 2x2");
             compact.setTextColor(Color.WHITE);
             compact.setBackground(background(card,0xFF35517B,12));
             body.addView(compact,new LinearLayout.LayoutParams(-1,dp(50)));
             compact.setOnClickListener(v->{dialog.dismiss();pinWidget(id,true);});
-            TextView help=label("Or long-press Home → Widgets → Vision Walls. Clock and date update automatically.",12,muted,false);
+            TextView help=label("Or long-press Home → Widgets → Vision Walls. Clock/date are live; battery refreshes periodically.",12,muted,false);
             help.setPadding(dp(2),dp(9),dp(2),0);body.addView(help);}
         dialog.setContentView(body);if(dialog.getWindow()!=null){dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             dialog.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels*.95f),-2);}dialog.show();
