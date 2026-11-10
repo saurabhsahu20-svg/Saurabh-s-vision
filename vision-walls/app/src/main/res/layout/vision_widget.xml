@@ -1,17 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent" android:padding="3dp">
-    <ImageView android:id="@+id/widget_background" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
-    <View android:layout_width="match_parent" android:layout_height="match_parent" android:background="#99071224"/>
+    android:id="@+id/widget_root" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:padding="3dp">
+    <ImageView android:id="@+id/widget_background" android:layout_width="match_parent"
+        android:layout_height="match_parent" android:scaleType="centerCrop"/>
+    <View android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="#C0050C1E"/>
     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
-        android:orientation="vertical" android:padding="15dp" android:gravity="center_vertical">
-        <TextView android:id="@+id/widget_name" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textColor="#E9F3FF" android:textSize="11sp"/>
+        android:padding="14dp" android:orientation="vertical" android:gravity="center_vertical">
+        <TextView android:id="@+id/widget_name" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="VISION DIGITAL"
+            android:textSize="10sp" android:textColor="#4FE6FF" android:letterSpacing="0.13"
+            android:fontFamily="monospace" android:singleLine="true"/>
         <TextClock android:id="@+id/widget_clock" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:format12Hour="h:mm a" android:format24Hour="HH:mm"
-            android:textColor="#FFFFFF" android:textSize="41sp" android:textStyle="bold"/>
+            android:layout_height="wrap_content" android:format12Hour="hh:mm a"
+            android:format24Hour="HH:mm" android:textColor="#FFFFFF" android:textSize="43sp"
+            android:textStyle="bold" android:fontFamily="monospace" android:includeFontPadding="false"/>
         <TextClock android:id="@+id/widget_date" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:format12Hour="EEEE, d MMMM yyyy"
-            android:format24Hour="EEEE, d MMMM yyyy" android:textColor="#FFFFFF" android:textSize="13sp"/>
+            android:layout_height="wrap_content" android:format12Hour="EEE, d MMM yyyy"
+            android:format24Hour="EEE, d MMM yyyy" android:textColor="#DBEAFF"
+            android:textSize="13sp" android:fontFamily="monospace"/>
+        <TextView android:id="@+id/widget_battery" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="BATTERY --"
+            android:layout_marginTop="5dp" android:textColor="#4FE6FF"
+            android:textSize="11sp" android:textStyle="bold" android:fontFamily="monospace"/>
     </LinearLayout>
 </FrameLayout>
